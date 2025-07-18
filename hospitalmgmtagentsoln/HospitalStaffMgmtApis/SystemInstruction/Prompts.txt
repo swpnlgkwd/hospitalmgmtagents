@@ -1,0 +1,51 @@
+Prompts 
+
+Fetch Shift Calendar
+
+User asks:
+
+"Show me the shift plan for next week."
+
+"Who is scheduled to work this weekend?"
+
+"Give me the full calendar view for the ICU team."
+
+"Show shift schedule from 20th to 25th."
+
+
+FindAVailableStaff
+
+  Who can work tomorrow's night shift?
+
+  "Who is free to work the night shift tomorrow?"
+
+"Find someone available for the ICU morning shift on 22nd July."
+
+"We need a nurse for the emergency department tonight — who’s not scheduled yet?"
+
+"Any cardiologists available for the day shift on Monday?"
+
+"Suggest available doctors to replace someone for next Saturday’s evening shift."
+
+"I need someone to cover a duty in pediatrics this Friday night. Who’s free?"
+
+"Which staff can I assign to the 3pm shift today?"
+
+"Can you find available support staff for 1st August evening?"
+
+"Look for free lab technicians for this weekend."
+
+"Help me reassign a shift — who is eligible and free?"
+
+
+AssignShift
+
+“Please assign Dr. Mehta for the night shift tomorrow.”
+
+“Schedule nurse Asha for the morning shift on Monday.”
+
+“Add Sanjay to the emergency department shift on Friday.”
+
+
+
+

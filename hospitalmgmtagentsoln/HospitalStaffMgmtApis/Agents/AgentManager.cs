@@ -4,9 +4,7 @@ using System.Text.Json;
 using Azure;
 using Azure.AI.Agents.Persistent;
 using Azure.Identity;
-using HospitalStaffMgmtApis.Agents.ToolDefinitions;
-using HospitalStaffMgmtApis.Functions;
-using HospitalStaffMgmtApis.Models;
+using HospitalStaffMgmtApis.Agents.Tools;
 using Microsoft.Extensions.Configuration;
 
 namespace HospitalStaffMgmtApis.Agents
@@ -17,9 +15,8 @@ namespace HospitalStaffMgmtApis.Agents
         // Ensures a Persistent Agent is created and returned
         Task<PersistentAgent> EnsureAgentExistsAsync();
 
+        // Fetch the Agent
         PersistentAgent GetAgent();
-
-
     }
 
     // Concrete implementation of IAgentManager
@@ -28,16 +25,21 @@ namespace HospitalStaffMgmtApis.Agents
         private readonly PersistentAgentsClient _client;   // Persistent client to manage agents
         private readonly IConfiguration _config;           // Configuration for app settings
         private readonly string _agentName;              // Name of the agent to manage
+        private readonly ILogger<AgentManager> _logger;
 
         // Constructor receives injected dependencies
-        public AgentManager(PersistentAgentsClient persistentAgentClient, IConfiguration config)
+        public AgentManager(PersistentAgentsClient persistentAgentClient, IConfiguration config, ILogger<AgentManager> logger)
         {
             _client = persistentAgentClient;
             _config = config;
             _agentName = _config["AgentName"] ?? throw new ArgumentNullException("AgentName configuration is missing");
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
+
+        // Fetches the agent by name
         public PersistentAgent GetAgent()
         {
+            _logger.LogInformation($"Fetching agent with name: {_agentName}");
             return _client.Administration.GetAgent(_agentName); // Get agent by name
         }
 
@@ -63,14 +65,14 @@ namespace HospitalStaffMgmtApis.Agents
             // Read configuration for model deployment and agent name
             string modelDeployment = _config["ModelDeploymentName"];
 
-
             // Create the agent with instructions and registered tools
             return await _client.Administration.CreateAgentAsync(
                 model: modelDeployment,
                 name: _agentName,
                 instructions: instructions,
-                tools: ToolDefinitions.ToolDefinitions.All  // Static list of tool definitions
+                tools: ToolDefinitions.All  // Static list of tool definitions
             );
+
         }
     }
 }

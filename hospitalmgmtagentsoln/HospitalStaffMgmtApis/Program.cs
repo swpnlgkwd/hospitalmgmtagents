@@ -2,7 +2,7 @@ using Azure;
 using Azure.AI.Agents.Persistent;
 using Azure.Identity;
 using HospitalStaffMgmtApis.Agents;
-using HospitalStaffMgmtApis.Functions;
+using HospitalStaffMgmtApis.Data.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,8 +33,9 @@ builder.Services.AddScoped<AgentService>( sp =>
     var agent =  agentManager.GetAgent(); // This should return the already-created PersistentAgent
     var client = sp.GetRequiredService<PersistentAgentsClient>();
     var staffRepo = sp.GetRequiredService<IStaffRepository>();
+    var loggerService = sp.GetRequiredService<ILogger<AgentService>>();
 
-    return new AgentService(client, agent, staffRepo);
+    return new AgentService(client, agent, staffRepo, loggerService);
 });
 
 

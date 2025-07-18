@@ -1,10 +1,11 @@
 ﻿using Azure;
 using Azure.AI.Agents;
 using Azure.AI.Agents.Persistent;
-using HospitalStaffMgmtApis.Agents.ToolDefinitions;
-using HospitalStaffMgmtApis.Functions;
-using HospitalStaffMgmtApis.Models;
+using HospitalStaffMgmtApis.Agents.Tools;
+using HospitalStaffMgmtApis.Data.Models;
+using HospitalStaffMgmtApis.Data.Repository;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
 namespace HospitalStaffMgmtApis.Agents
@@ -14,12 +15,15 @@ namespace HospitalStaffMgmtApis.Agents
         private readonly PersistentAgentsClient _client;
         private readonly PersistentAgent _agent;
         private readonly IStaffRepository _staffRepository;
+        private readonly ILogger<AgentService> _logger;
 
-        public AgentService(PersistentAgentsClient persistentAgentsClient, PersistentAgent agent, IStaffRepository staffRepository)
+        public AgentService(PersistentAgentsClient persistentAgentsClient, PersistentAgent agent,
+            IStaffRepository staffRepository, ILogger<AgentService> logger)
         {
             _client = persistentAgentsClient;
             _agent = agent;
             _staffRepository = staffRepository;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         /// <summary>
@@ -35,6 +39,7 @@ namespace HospitalStaffMgmtApis.Agents
         /// </summary>
         public Task AddUserMessageAsync(PersistentAgentThread thread, MessageRole role, string message)
         {
+            _logger.LogInformation($"Adding user message to thread {thread.Id}: {message} :");
             _client.Messages.CreateMessage(thread.Id, role, message);
             return Task.CompletedTask;
         }
@@ -82,20 +87,14 @@ namespace HospitalStaffMgmtApis.Agents
                 order: ListSortOrder.Descending
             );
 
-
-            //var messageContent = messages.First();
-
-            //return messageContent.ContentItems.OfType<MessageTextContent>().FirstOrDefault();
-
-
             // Return the latest assistant message (if any)
             foreach (var msg in messages)
             {
                 var messg = msg.ContentItems.OfType<MessageTextContent>().FirstOrDefault();
-
+                _logger.LogInformation(messg?.Text.ToString());
                 return messg;
             }
-
+          
             return null;
         }
 
@@ -108,10 +107,103 @@ namespace HospitalStaffMgmtApis.Agents
             {
                 using var argumentsJson = JsonDocument.Parse(functionToolCall.Arguments);
 
-                Console.WriteLine($"Tool invoked: {toolCall.Id} at {DateTime.Now} for  {functionToolCall.Name}" );
+                Console.WriteLine($"Tool invoked: {toolCall.Id} at {DateTime.Now} for {functionToolCall.Name}");
+                var root = argumentsJson.RootElement;
+                _logger.LogInformation("Arguments Received : " + argumentsJson.ToString());
+                _logger.LogInformation("Functions called: " + functionToolCall.Name);
+
+
+                if (functionToolCall.Name == ShiftSwapTool.GetTool().Name)
+                {
+                    var request = new ShiftSwapRequest
+                    {
+                        ShiftDate = root.TryGetProperty("shiftDate", out var shiftDateProp) ? shiftDateProp.GetString() ?? "" : "",
+                        ShiftType = root.TryGetProperty("shiftType", out var shiftTypeProp) ? shiftTypeProp.GetString() ?? "" : "",
+                        OriginalStaffId = root.TryGetProperty("originalStaffId", out var origIdProp) ? origIdProp.GetInt32() : 0,
+                        ReplacementStaffId = root.TryGetProperty("replacementStaffId", out var replIdProp) ? replIdProp.GetInt32() : 0
+                    };
+                    var resultMessage = await _staffRepository.ShiftSwapAsync(request);
+                    var resultJson = JsonSerializer.Serialize(new { message = resultMessage });
+                    _logger.LogInformation($"Data Retrieved for : {functionToolCall.Name} {resultJson} ");
+                    return new ToolOutput(functionToolCall.Id, resultJson);
+                }
+
+                if (functionToolCall.Name == CancelShiftAssignmentTool.GetTool().Name)
+                {
+                    var cancelRequest = new CancelShiftRequest
+                    {
+                        StaffId = root.GetProperty("staffId").GetInt32(),
+                        ShiftDate = root.GetProperty("shiftDate").GetString() ?? "",
+                        ShiftType = root.GetProperty("shiftType").GetString() ?? ""
+                    };
+
+                    var result = await _staffRepository.CancelShiftAssignmentAsync(cancelRequest);
+                    var resultJson = JsonSerializer.Serialize(new { message = result });
+                    _logger.LogInformation($"Data Retrieved for : {functionToolCall.Name} {resultJson} ");
+                    return new ToolOutput(functionToolCall.Id, JsonSerializer.Serialize(new { message = result }));
+                }
+
+                if (functionToolCall.Name == SubmitLeaveRequestTool.GetTool().Name)
+                {
+                    var leaveRequest = new LeaveRequest
+                    {
+                        StaffId = root.GetProperty("staffId").GetInt32(),
+                        LeaveStart = root.GetProperty("leaveStart").GetString() ?? "",
+                        LeaveEnd = root.GetProperty("leaveEnd").GetString() ?? "",
+                        LeaveType = root.GetProperty("leaveType").GetString() ?? ""
+                    };
+
+                    var result = await _staffRepository.SubmitLeaveRequest(leaveRequest);
+                    var resultJson = JsonSerializer.Serialize(new { message = result });
+                    _logger.LogInformation($"Data Retrieved for : {functionToolCall.Name} {resultJson} ");
+                    return new ToolOutput(functionToolCall.Id, JsonSerializer.Serialize(new { message = result }));
+                }
+
+                if (functionToolCall.Name == FetchStaffScheduleTool.GetTool().Name)
+                {
+                    var request = new StaffScheduleRequest
+                    {
+                        StaffId = root.GetProperty("staffId").GetInt32()
+                    };
+
+                    var schedule = await _staffRepository.FetchStaffSchedule(request);
+                    var resultJson = JsonSerializer.Serialize(new { message = schedule });
+                    _logger.LogInformation($"Data Retrieved for : {functionToolCall.Name} {resultJson} ");
+                    return new ToolOutput(functionToolCall.Id, JsonSerializer.Serialize(schedule));
+                }
+
+                if (functionToolCall.Name == AssignShiftToStaffTool.GetTool().Name)
+                {
+                    var request = new AssignShiftRequest
+                    {
+                        StaffId = root.GetProperty("staffId").GetInt32(),
+                        ShiftDate = root.GetProperty("shiftDate").GetString() ?? "",
+                        ShiftType = root.GetProperty("shiftType").GetString() ?? ""
+                    };
+
+                    var result = await _staffRepository.AssignShiftToStaff(request);
+                    var resultJson = JsonSerializer.Serialize(new { message = result });
+                    _logger.LogInformation($"Data Retrieved for : {functionToolCall.Name} {resultJson} ");
+                    return new ToolOutput(functionToolCall.Id, JsonSerializer.Serialize(new { message = result }));
+                }
+
+                if (functionToolCall.Name == FetchShiftCalendarTool.GetTool().Name)
+                {
+                    var request = new ShiftCalendarRequest
+                    {
+                        StartDate = root.GetProperty("startDate").GetString() ?? "",
+                        EndDate = root.GetProperty("endDate").GetString() ?? ""
+                    };
+
+                    var result = await _staffRepository.FetchShiftCalendar(request);
+                    var resultJson = JsonSerializer.Serialize(new { message = result });
+                    _logger.LogInformation($"Data Retrieved for : {functionToolCall.Name} {resultJson} ");
+                    return new ToolOutput(functionToolCall.Id, JsonSerializer.Serialize(result));
+                }
+
                 if (functionToolCall.Name == FindAvailableStaffTool.GetTool().Name)
                 {
-                    var root = argumentsJson.RootElement;
+
                     var request = new FindStaffRequest
                     {
                         ShiftDate = root.TryGetProperty("shiftDate", out var shiftDateProp) ? shiftDateProp.GetString() ?? "" : "",
@@ -125,13 +217,13 @@ namespace HospitalStaffMgmtApis.Agents
                     {
                         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
                     });
-
-
+                    _logger.LogInformation($"Data Retrieved for : {functionToolCall.Name} {resultJson} ");
                     return new ToolOutput(functionToolCall.Id, resultJson);
                 }
             }
 
             return null;
         }
+
     }
 }

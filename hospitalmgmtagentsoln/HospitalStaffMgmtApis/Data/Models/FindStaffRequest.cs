@@ -1,17 +1,17 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace HospitalStaffMgmtApis.Models
+namespace HospitalStaffMgmtApis.Data.Models
 {
     public class FindStaffRequest
     {
         [JsonPropertyName("shiftDate")]
-        public string ShiftDate { get; set; }
+        public string ShiftDate { get; set; } = string.Empty;
 
         [JsonPropertyName("shiftType")]
-        public string ShiftType { get; set; }
+        public string ShiftType { get; set; } = string.Empty;
 
         [JsonPropertyName("role")]
-        public string? Role { get; set; }
+        public string? Role { get; set; } = string.Empty;
 
         [JsonPropertyName("department")]
         public string? Department { get; set; }

@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace HospitalStaffMgmtApis.Models
+namespace HospitalStaffMgmtApis.Data.Models
 {
     public class FindStaffResult
     {
