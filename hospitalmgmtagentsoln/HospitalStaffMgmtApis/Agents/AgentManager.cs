@@ -4,75 +4,71 @@ using System.Text.Json;
 using Azure;
 using Azure.AI.Agents.Persistent;
 using Azure.Identity;
-using HospitalStaffMgmtApis.Agents.Tools;
+using HospitalStaffMgmtApis.Agents.FunctionTools;
 using Microsoft.Extensions.Configuration;
 
 namespace HospitalStaffMgmtApis.Agents
 {
-    // Interface to define agent management contract
-    public interface IAgentManager
-    {
-        // Ensures a Persistent Agent is created and returned
-        Task<PersistentAgent> EnsureAgentExistsAsync();
-
-        // Fetch the Agent
-        PersistentAgent GetAgent();
-    }
-
-    // Concrete implementation of IAgentManager
+    // Class Responsible for Agent Setup
     public class AgentManager : IAgentManager
     {
-        private readonly PersistentAgentsClient _client;   // Persistent client to manage agents
-        private readonly IConfiguration _config;           // Configuration for app settings
-        private readonly string _agentName;              // Name of the agent to manage
+        private readonly PersistentAgentsClient _client;
+        private readonly IConfiguration _config;
+        private readonly string _agentName;
         private readonly ILogger<AgentManager> _logger;
 
-        // Constructor receives injected dependencies
+        private string agentId = string.Empty; // Use instance field instead of static
+
         public AgentManager(PersistentAgentsClient persistentAgentClient, IConfiguration config, ILogger<AgentManager> logger)
         {
             _client = persistentAgentClient;
             _config = config;
-            _agentName = _config["AgentName"] ?? throw new ArgumentNullException("AgentName configuration is missing");
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _agentName = _config["AgentName"] ?? throw new ArgumentNullException("AgentName configuration is missing");
         }
 
-        // Fetches the agent by name
         public PersistentAgent GetAgent()
         {
-            _logger.LogInformation($"Fetching agent with name: {_agentName}");
-            return _client.Administration.GetAgent(_agentName); // Get agent by name
+            if (string.IsNullOrWhiteSpace(agentId))
+                throw new InvalidOperationException("Agent has not been initialized. Call EnsureAgentExistsAsync() first.");
+
+            _logger.LogInformation($"Fetching agent with ID: {agentId}");
+            return _client.Administration.GetAgent(agentId);
         }
 
-        // Creates and returns the agent, reading prompt and tool definitions
         public async Task<PersistentAgent> EnsureAgentExistsAsync()
         {
+            _logger.LogInformation($"Looking for agent with name: {_agentName}");
 
-            // Try to find agent with this name
             await foreach (var agent in _client.Administration.GetAgentsAsync())
             {
                 if (agent.Name.Equals(_agentName, StringComparison.OrdinalIgnoreCase))
                 {
-                    return agent; // Agent already exists
+                    _logger.LogInformation($"Agent already exists with ID: {agent.Id}");
+                    agentId = agent.Id;
+                    return agent;
                 }
-
             }
-            // Path to system instructions (LLM prompt)
+
             string systemPromptPath = Path.Combine("SystemInstruction", "systemprompt.txt");
 
-            // Read the prompt text from the file
+            if (!File.Exists(systemPromptPath))
+                throw new FileNotFoundException($"System prompt file not found at path: {systemPromptPath}");
+
             string instructions = await File.ReadAllTextAsync(systemPromptPath);
+            string modelDeployment = _config["ModelDeploymentName"] ?? throw new ArgumentNullException("ModelDeploymentName configuration is missing");
 
-            // Read configuration for model deployment and agent name
-            string modelDeployment = _config["ModelDeploymentName"];
-
-            // Create the agent with instructions and registered tools
-            return await _client.Administration.CreateAgentAsync(
+            var createdAgentResponse = await _client.Administration.CreateAgentAsync(
                 model: modelDeployment,
                 name: _agentName,
                 instructions: instructions,
-                tools: ToolDefinitions.All  // Static list of tool definitions
+                tools: ToolDefinitions.All
             );
 
+            agentId = createdAgentResponse.Value.Id;
+            _logger.LogInformation($"Created new agent with ID: {agentId}");
+
+            return createdAgentResponse;
         }
     }
 }
