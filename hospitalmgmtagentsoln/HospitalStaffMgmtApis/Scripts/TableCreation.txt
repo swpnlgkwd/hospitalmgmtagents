@@ -1,0 +1,115 @@
+-- 1. Department Table
+CREATE TABLE Department (
+    department_id INT IDENTITY(1,1) PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE
+);
+
+-- 2. ShiftType Table
+CREATE TABLE ShiftType (
+    shift_type_id INT IDENTITY(1,1) PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,         -- Morning, Evening, Night
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL
+);
+
+-- 3. Role Table
+CREATE TABLE Role (
+    role_id INT IDENTITY(1,1) PRIMARY KEY,
+    role_name NVARCHAR(50) NOT NULL UNIQUE    -- 'Employee', 'Scheduler'
+);
+
+-- 4. ShiftStatus Table
+CREATE TABLE ShiftStatus (
+    shift_status_id INT IDENTITY(1,1) PRIMARY KEY,
+    status_name NVARCHAR(50) NOT NULL UNIQUE  -- 'Vacant', 'Assigned', 'Cancelled'
+);
+
+-- 5. Staff Table (Normalized department as FK)
+CREATE TABLE Staff (
+    staff_id INT IDENTITY(1,1) PRIMARY KEY,
+    name NVARCHAR(100) NOT NULL,
+    role_id INT NOT NULL,
+    department_id INT NOT NULL,
+    is_active BIT NOT NULL DEFAULT 1,
+
+    CONSTRAINT FK_Staff_Role FOREIGN KEY (role_id) REFERENCES Role(role_id),
+    CONSTRAINT FK_Staff_Department FOREIGN KEY (department_id) REFERENCES Department(department_id)
+);
+
+-- Index for fast lookups on department-based staff queries
+CREATE INDEX IX_Staff_DepartmentId ON Staff(department_id);
+CREATE INDEX IX_Staff_RoleId ON Staff(role_id);
+
+-- 6. ShiftPlanning Table
+CREATE TABLE ShiftPlanning (
+    shift_date DATE NOT NULL,
+    shift_type_id INT NOT NULL,
+    department_id INT NOT NULL,
+    required_nurses INT NOT NULL CHECK (required_nurses >= 0),
+
+    CONSTRAINT PK_ShiftPlanning PRIMARY KEY (shift_date, shift_type_id, department_id),
+    CONSTRAINT FK_ShiftPlanning_ShiftType FOREIGN KEY (shift_type_id) REFERENCES ShiftType(shift_type_id),
+    CONSTRAINT FK_ShiftPlanning_Department FOREIGN KEY (department_id) REFERENCES Department(department_id)
+);
+
+-- 7. PlannedShift Table
+CREATE TABLE PlannedShift (
+    planned_shift_id INT IDENTITY(1,1) PRIMARY KEY,
+    shift_date DATE NOT NULL,
+    shift_type_id INT NOT NULL,
+    department_id INT NOT NULL,
+    slot_number INT NOT NULL,
+    shift_status_id INT NOT NULL,
+    assigned_staff_id INT NULL,
+
+    CONSTRAINT FK_PlannedShift_ShiftType FOREIGN KEY (shift_type_id) REFERENCES ShiftType(shift_type_id),
+    CONSTRAINT FK_PlannedShift_Department FOREIGN KEY (department_id) REFERENCES Department(department_id),
+    CONSTRAINT FK_PlannedShift_Staff FOREIGN KEY (assigned_staff_id) REFERENCES Staff(staff_id),
+    CONSTRAINT FK_PlannedShift_Status FOREIGN KEY (shift_status_id) REFERENCES ShiftStatus(shift_status_id)
+);
+
+
+-- Optional index to speed up available slot lookup
+CREATE INDEX IX_PlannedShift_DateTypeDept ON PlannedShift(shift_date, shift_type_id, department_id);
+
+-- 8. ShiftAssignments Table
+CREATE TABLE ShiftAssignments (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    staff_id INT NOT NULL,
+    shift_date DATE NOT NULL,
+    shift_type_id INT NOT NULL,
+
+    CONSTRAINT FK_ShiftAssignments_Staff FOREIGN KEY (staff_id) REFERENCES Staff(staff_id),
+    CONSTRAINT FK_ShiftAssignments_ShiftType FOREIGN KEY (shift_type_id) REFERENCES ShiftType(shift_type_id)
+);
+
+CREATE INDEX IX_ShiftAssignments_StaffDate ON ShiftAssignments(staff_id, shift_date);
+
+-- 9. LeaveRequests Table
+CREATE TABLE LeaveRequests (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    staff_id INT NOT NULL,
+    leave_start DATE NOT NULL,
+    leave_end DATE NOT NULL,
+    leave_type NVARCHAR(50),
+    status NVARCHAR(20) NOT NULL CHECK (status IN ('Pending', 'Approved', 'Rejected')),
+
+    CONSTRAINT FK_LeaveRequests_Staff FOREIGN KEY (staff_id) REFERENCES Staff(staff_id)
+);
+
+CREATE INDEX IX_LeaveRequests_Staff ON LeaveRequests(staff_id);
+
+-- 10. NurseAvailability Table
+CREATE TABLE NurseAvailability (
+    nurse_availability_id INT IDENTITY(1,1) PRIMARY KEY,
+    staff_id INT NOT NULL,
+    available_date DATE NOT NULL,
+    is_available BIT NOT NULL,                    -- 1 = Available, 0 = Unavailable
+    shift_type_id INT NULL,                       -- NULL = whole day
+    remarks VARCHAR(255),
+
+    CONSTRAINT FK_NurseAvailability_Staff FOREIGN KEY (staff_id) REFERENCES Staff(staff_id),
+    CONSTRAINT FK_NurseAvailability_ShiftType FOREIGN KEY (shift_type_id) REFERENCES ShiftType(shift_type_id)
+);
+
+CREATE INDEX IX_NurseAvailability_StaffDate ON NurseAvailability(staff_id, available_date);

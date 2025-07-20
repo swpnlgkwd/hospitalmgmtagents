@@ -1,4 +1,5 @@
 ﻿using Azure.AI.Agents.Persistent;
+using HospitalStaffMgmtApis.Agents.Tools;
 
 namespace HospitalStaffMgmtApis.Agents.FunctionTools
 {
@@ -11,13 +12,7 @@ namespace HospitalStaffMgmtApis.Agents.FunctionTools
             ApplyForLeaveTool.GetTool(),
             AutoReplaceShiftsForLeaveTool.GetTool(),
             ResolveRelativeDateTool.GetTool(),
-            //FindAvailableStaffTool.GetTool(),
-            //FetchShiftCalendarTool.GetTool(),
-            //ShiftSwapTool.GetTool(),
-            //CancelShiftAssignmentTool.GetTool(),
-            //SubmitLeaveRequestTool.GetTool(),
-            //FetchStaffScheduleTool.GetTool(),
-            //AssignShiftToStaffTool.GetTool(),
+            ShiftSwapTool.GetTool()
         };
     }
 }

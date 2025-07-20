@@ -16,6 +16,13 @@ export class Chat   implements OnInit {
   messages: { sender: string, text: string }[] = [];
   isWaiting = false;
   showChat = true;
+  suggestions: string[] = [
+  "Show my shifts for this week",
+  "Request leave for tomorrow",
+  "Swap shift with Anjali",
+  "Who's working in ICU today?",
+  "Cancel my evening shift on Friday"
+];
 
   @ViewChild('chatContainer') chatContainer!: ElementRef;
 
@@ -28,23 +35,33 @@ export class Chat   implements OnInit {
   });
 }
 
+applySuggestion(suggestion: string) {
+  this.messageText = suggestion;
+  this.sendMessage();  // Optionally send immediately
+}
+
 sendMessage(): void {
   const question = this.messageText.trim();
-  if (!question) return;
+  if (!question || this.isWaiting) return; // prevent double submission
 
+  // Push user's message
   this.messages.push({ sender: 'User', text: question });
-  this.scrollToBottom(); // 👈 ADD HERE
+  this.scrollToBottom();
+
+  // Reset input and set loading
   this.messageText = '';
   this.isWaiting = true;
 
+  // Call agent service
   this.agentService.askAgent(question).subscribe({
     next: (response) => {
-      this.messages.push({ sender: 'Agent', text: response.reply });
+      this.messages.push({ sender: 'Agent', text:  response.reply || '🤖 (No reply)' });
       this.isWaiting = false;
-      this.cdRef.detectChanges(); // 👈 force UI to update
+      this.cdRef.detectChanges();
       this.scrollToBottom();
     },
     error: (error) => {
+      console.error('Agent error:', error);
       this.messages.push({
         sender: 'Agent',
         text: '⚠️ Something went wrong. Please try again later.',
@@ -70,4 +87,5 @@ sendMessage(): void {
   toggleChat() {
     this.showChat = !this.showChat;
   }
+
 }

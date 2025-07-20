@@ -23,6 +23,8 @@ namespace HospitalStaffMgmtApis.Data.Repository
         Task<AutoReplaceShiftsForLeaveResponse> AutoReplaceShiftsForLeaveAsync(GetImpactedShiftsByLeaveRequest request);
 
         Task<List<ShiftScheduleResponse>> GetShiftScheduleBetweenDatesAsync(DateOnly startDate, DateOnly endDate);
+        Task<bool> SwapShiftsAsync(SwapShiftRequest request);
+
     }
 
     // Implementation of staff repository using SQL Server
@@ -431,6 +433,118 @@ namespace HospitalStaffMgmtApis.Data.Repository
             }
 
             return result;
+        }
+
+        public async Task<bool> SwapShiftsAsync(SwapShiftRequest request)
+        {
+            using var conn = new SqlConnection(sqlConnectionString);
+            await conn.OpenAsync();
+            using var tx = conn.BeginTransaction();
+
+            // Helper method to validate a swap
+            async Task<bool> IsEligibleForShiftAsync(int staffId, DateTime shiftDate, int shiftTypeId)
+            {
+                // 1. Check LeaveRequests
+                var leaveCheckCmd = new SqlCommand(@"
+            SELECT COUNT(*) FROM LeaveRequests
+            WHERE staff_id = @staff_id
+              AND status != 'Rejected'
+              AND @shift_date BETWEEN leave_start AND leave_end", conn, tx);
+
+                leaveCheckCmd.Parameters.AddWithValue("@staff_id", staffId);
+                leaveCheckCmd.Parameters.AddWithValue("@shift_date", shiftDate);
+
+                var onLeave = (int)await leaveCheckCmd.ExecuteScalarAsync();
+                if (onLeave > 0) return false;
+
+                // 2. Check NurseAvailability (only if entry exists and is_available = 0)
+                var availCheckCmd = new SqlCommand(@"
+            SELECT is_available FROM NurseAvailability
+            WHERE staff_id = @staff_id AND available_date = @shift_date
+              AND (shift_type_id IS NULL OR shift_type_id = @shift_type_id)", conn, tx);
+
+                availCheckCmd.Parameters.AddWithValue("@staff_id", staffId);
+                availCheckCmd.Parameters.AddWithValue("@shift_date", shiftDate);
+                availCheckCmd.Parameters.AddWithValue("@shift_type_id", shiftTypeId);
+
+                var reader = await availCheckCmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    if (!reader.GetBoolean(0)) // is_available = 0
+                    {
+                        await reader.CloseAsync();
+                        return false;
+                    }
+                }
+                await reader.CloseAsync();
+
+                return true;
+            }
+
+            // 3. Fetch original shift records and ensure staff are actually assigned
+            var fetchCmd = new SqlCommand(@"
+        SELECT planned_shift_id FROM PlannedShift
+        WHERE shift_date = @date1 AND shift_type_id = @type1 AND assigned_staff_id = @staff1;
+        
+        SELECT planned_shift_id FROM PlannedShift
+        WHERE shift_date = @date2 AND shift_type_id = @type2 AND assigned_staff_id = @staff2;", conn, tx);
+
+            fetchCmd.Parameters.AddWithValue("@date1", request.ShiftDate1);
+            fetchCmd.Parameters.AddWithValue("@type1", request.ShiftTypeId1);
+            fetchCmd.Parameters.AddWithValue("@staff1", request.StaffId1);
+
+            fetchCmd.Parameters.AddWithValue("@date2", request.ShiftDate2);
+            fetchCmd.Parameters.AddWithValue("@type2", request.ShiftTypeId2);
+            fetchCmd.Parameters.AddWithValue("@staff2", request.StaffId2);
+
+            int? shiftId1 = null, shiftId2 = null;
+            using (var reader = await fetchCmd.ExecuteReaderAsync())
+            {
+                if (await reader.ReadAsync())
+                    shiftId1 = reader.GetInt32(0);
+                await reader.NextResultAsync();
+                if (await reader.ReadAsync())
+                    shiftId2 = reader.GetInt32(0);
+            }
+
+            if (shiftId1 == null || shiftId2 == null)
+            {
+                tx.Rollback();
+                return false; // One of the shifts not found or not assigned correctly
+            }
+
+            // 4. Validate new assignments
+            bool eligible1 = await IsEligibleForShiftAsync(request.StaffId1, request.ShiftDate2, request.ShiftTypeId2);
+            bool eligible2 = await IsEligibleForShiftAsync(request.StaffId2, request.ShiftDate1, request.ShiftTypeId1);
+
+            if (!eligible1 || !eligible2)
+            {
+                tx.Rollback();
+                return false; // Swap violates availability or leave policy
+            }
+
+            // 5. Perform the swap
+            var updateCmd = new SqlCommand(@"
+        UPDATE PlannedShift SET assigned_staff_id = @new_staff1 WHERE planned_shift_id = @id1;
+        UPDATE PlannedShift SET assigned_staff_id = @new_staff2 WHERE planned_shift_id = @id2;", conn, tx);
+
+            updateCmd.Parameters.AddWithValue("@new_staff1", request.StaffId2); // staff2 now gets shift1
+            updateCmd.Parameters.AddWithValue("@id1", shiftId1.Value);
+            updateCmd.Parameters.AddWithValue("@new_staff2", request.StaffId1); // staff1 now gets shift2
+            updateCmd.Parameters.AddWithValue("@id2", shiftId2.Value);
+
+            int rows = await updateCmd.ExecuteNonQueryAsync();
+
+            if (rows >= 2)
+            {
+                tx.Commit();
+                return true;
+            }
+            else
+            {
+                tx.Rollback();
+                return false;
+            }
         }
 
     }
