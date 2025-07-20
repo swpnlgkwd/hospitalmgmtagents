@@ -1,2 +1,4 @@
-<app-shift-calendar></app-shift-calendar>
-<app-chat></app-chat>
+<!-- <app-shift-calendar></app-shift-calendar>
+<app-chat></app-chat> -->
+<app-header *ngIf="isLoggedIn()"></app-header>
+<router-outlet></router-outlet>

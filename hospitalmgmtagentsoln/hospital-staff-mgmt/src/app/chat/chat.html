@@ -7,8 +7,10 @@
         <span class="text-lg font-semibold">ShiftGenie <span class="text-sm font-normal opacity-80">– Your Wish,
                 Scheduled</span></span>
 
-        <button class="close-btn" (click)="toggleChat()"
-            class="text-white text-2xl leading-none hover:text-red-300 transition-all duration-200">×</button>
+        <button type="button" class="btn-close btn-close-white ms-auto" aria-label="Close" (click)="toggleChat()"
+            style="filter: brightness(0) invert(1);">
+        </button>
+
     </div>
 
 
@@ -39,22 +41,13 @@
     </div>
 
     <!-- Chat Input -->
-<div class="chat-input">
-  <input
-    type="text"
-    [(ngModel)]="messageText"
-    (keyup.enter)="sendMessage()"
-    [disabled]="isWaiting"
-    placeholder="Type your message..."
-  />
-  <button
-    class="send-button"
-    (click)="sendMessage()"
-    [disabled]="isWaiting || !messageText.trim()"
-    aria-label="Send message"
-  >
-    <span *ngIf="!isWaiting">📨</span>
-    <span *ngIf="isWaiting" class="loader"></span>
-  </button>
-</div>
+    <div class="chat-input">
+        <input type="text" [(ngModel)]="messageText" (keyup.enter)="sendMessage()" [disabled]="isWaiting"
+            placeholder="Type your message..." />
+        <button class="send-button" (click)="sendMessage()" [disabled]="isWaiting || !messageText.trim()"
+            aria-label="Send message">
+            <span *ngIf="!isWaiting">📨</span>
+            <span *ngIf="isWaiting" class="loader"></span>
+        </button>
+    </div>
 </div>

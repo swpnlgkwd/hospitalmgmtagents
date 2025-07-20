@@ -2,6 +2,7 @@ import { Component, ElementRef, NgZone, ViewChild,ChangeDetectorRef, OnInit } fr
 import { AgentService } from '../services/agent.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { FullCalendarComponent } from '@fullcalendar/angular';
 
 
 @Component({
@@ -11,7 +12,7 @@ import { FormsModule } from '@angular/forms';
   imports: [CommonModule,FormsModule ],
   styleUrls: ['./chat.css']
 })
-export class Chat   implements OnInit {
+export class Chat implements OnInit {
   messageText: string = '';
   messages: { sender: string, text: string }[] = [];
   isWaiting = false;
@@ -85,7 +86,7 @@ sendMessage(): void {
   }
 
   toggleChat() {
-    this.showChat = !this.showChat;
+    this.showChat = !this.showChat;  
   }
 
 }

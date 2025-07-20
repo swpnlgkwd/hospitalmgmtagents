@@ -1,16 +1,23 @@
 import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router'; 
+import { RouterModule, RouterOutlet } from '@angular/router'; 
 import { Chat } from './chat/chat';
 import { ShiftCalendarComponent } from './shift-calendar.component/shift-calendar.component';
- 
+import { Header } from './header/header';
+import { CommonModule } from '@angular/common';
+
 
 @Component({
   selector: 'app-root',
   standalone: true, 
-  imports:[Chat,ShiftCalendarComponent],
+  imports:[Header, RouterModule,CommonModule],
+  
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
 export class App {
   protected readonly title = signal('hospital-staff-mgmt');
+  isLoggedIn(): boolean {
+    return !!localStorage.getItem('authToken'); // or your token key
+  }
+
 }

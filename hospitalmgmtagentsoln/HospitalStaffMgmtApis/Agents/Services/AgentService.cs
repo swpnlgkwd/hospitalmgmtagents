@@ -4,7 +4,7 @@ using HospitalStaffMgmtApis.Data.Repository;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
-namespace HospitalStaffMgmtApis.Service
+namespace HospitalStaffMgmtApis.Agents.Services
 {
     /// <summary>
     /// Service responsible for handling interactions with the Persistent Agent,

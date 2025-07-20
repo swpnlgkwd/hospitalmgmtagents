@@ -1,0 +1,45 @@
+<div class="d-flex justify-content-center align-items-center min-vh-100 bg-gradient bg-light">
+  <div class="card shadow rounded-4 p-4 border-0" style="max-width: 400px; width: 100%; backdrop-filter: blur(8px);">
+    
+    <div class="text-center mb-4">
+      <h2 class="h4 fw-bold text-primary">Hospital Shift Scheduler</h2>
+      <p class="text-muted small mb-0">Secure login for staff & schedulers</p>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onLogin()" autocomplete="off">
+      <div class="mb-3">
+        <label class="form-label text-muted small">Username</label>
+        <input
+          formControlName="username"
+          type="text"
+          class="form-control form-control-lg"
+          placeholder="Enter your username"
+        />
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label text-muted small">Password</label>
+        <input
+          formControlName="password"
+          type="password"
+          class="form-control form-control-lg"
+          placeholder="Enter your password"
+        />
+      </div>
+
+      <div class="d-grid mb-2">
+        <button
+          [disabled]="loading"
+          type="submit"
+          class="btn btn-primary btn-lg shadow-sm"
+        >
+          {{ loading ? 'Logging in...' : 'Login' }}
+        </button>
+      </div>
+    </form>
+
+    <div class="text-center text-muted small mt-3">
+      © 2025 CityCare Hospitals
+    </div>
+  </div>
+</div>

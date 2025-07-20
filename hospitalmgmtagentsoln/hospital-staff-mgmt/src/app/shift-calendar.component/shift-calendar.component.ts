@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { FullCalendarModule } from '@fullcalendar/angular'; // standalone module
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { FullCalendarComponent, FullCalendarModule } from '@fullcalendar/angular'; // standalone module
 import { CalendarOptions } from '@fullcalendar/core/index.js';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -16,6 +16,8 @@ import { ShiftScheduleService } from '../services/shift-schedule.service';
 export class ShiftCalendarComponent  implements OnInit {
 
   constructor(private scheduleService: ShiftScheduleService) {}
+
+
   
   calendarOptions: CalendarOptions = {
   plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],

@@ -1,8 +1,7 @@
-using Azure.AI.Agents.Persistent;
-using HospitalStaffMgmtApis.Agents;
+
 using HospitalStaffMgmtApis.Business;
 using HospitalStaffMgmtApis.Data.Model;
-using HospitalStaffMgmtApis.Service;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HospitalStaffMgmtApis.Controllers
@@ -10,6 +9,7 @@ namespace HospitalStaffMgmtApis.Controllers
     /// <summary>
     /// API controller responsible for providing shift schedule data based on date range.
     /// </summary>
+    [Authorize]
     [ApiController]
     [Route("[controller]")]
     public class ScheduleController : ControllerBase
