@@ -3,46 +3,59 @@
 
 <!-- Chat Window -->
 <div class="chat-window" *ngIf="showChat">
-  <div class="chat-header">
-    <span>Hospital Assistant</span>
-    <button class="close-btn" (click)="toggleChat()">×</button>
-  </div>
+    <div class="chat-header flex items-center justify-between px-4 py-2 bg-blue-600 text-white rounded-t-2xl shadow-md">
+        <span class="text-lg font-semibold">ShiftGenie <span class="text-sm font-normal opacity-80">– Your Wish,
+                Scheduled</span></span>
 
-  <!-- Chat Messages -->
-  <div class="chat-messages" #chatContainer>
-    <div
-      *ngFor="let message of messages"
-      class="chat-row"
-      [ngClass]="{
+        <button class="close-btn" (click)="toggleChat()"
+            class="text-white text-2xl leading-none hover:text-red-300 transition-all duration-200">×</button>
+    </div>
+
+
+    <!-- Chat Messages -->
+    <div class="chat-messages" #chatContainer>
+        <div *ngFor="let message of messages" class="chat-row" [ngClass]="{
         'user-message': message.sender === 'User',
         'agent-message': message.sender === 'Agent'
-      }"
-    >
-      <ng-container *ngIf="message.sender === 'Agent'">
-        <div class="avatar">🤖</div>
-        <div class="message-bubble">{{ message.text }}</div>
-      </ng-container>
-       <ng-container *ngIf="message.sender === 'User'">
-        <div class="avatar user-avatar">🧑</div>
-        <div class="message-bubble">{{ message.text }}</div>
-      </ng-container>
+      }">
+            <ng-container *ngIf="message.sender === 'Agent'">
+                <div class="avatar">🤖</div>
+                <div class="message-bubble">{{ message.text }}</div>
+            </ng-container>
+            <ng-container *ngIf="message.sender === 'User'">
+                <div class="avatar user-avatar">🧑</div>
+                <div class="message-bubble">{{ message.text }}</div>
+            </ng-container>
+        </div>
+
+        <div class="typing-indicator" *ngIf="isWaiting">
+            <span class="shiftgenie-label">ShiftGenie is thinking</span>
+            <span class="dot-loader">
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </span>
+        </div>
     </div>
 
-    <!-- Assistant typing indicator -->
-    <div *ngIf="isWaiting" class="typing-indicator">
-      Assistant is typing...
-    </div>
-  </div>
+    <!-- Chat Input -->
+<div class="chat-input">
+  <input
+    type="text"
+    [(ngModel)]="messageText"
+    (keyup.enter)="sendMessage()"
+    [disabled]="isWaiting"
+    placeholder="Type your message..."
+  />
+  <button
+    class="send-button"
+    (click)="sendMessage()"
+    [disabled]="isWaiting || !messageText.trim()"
+    aria-label="Send message"
+  >
+    <span *ngIf="!isWaiting">📨</span>
+    <span *ngIf="isWaiting" class="loader"></span>
+  </button>
+</div>
 
-  <!-- Chat Input -->
-  <div class="chat-input">
-    <input
-      type="text"
-      [(ngModel)]="messageText"
-      (keyup.enter)="sendMessage()"
-      [disabled]="isWaiting"
-      placeholder="Type your message..."
-    />
-    <button (click)="sendMessage()" [disabled]="isWaiting">Send</button>
-  </div>
 </div>
