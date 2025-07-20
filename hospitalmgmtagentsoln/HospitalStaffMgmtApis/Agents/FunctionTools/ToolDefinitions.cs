@@ -10,6 +10,7 @@ namespace HospitalStaffMgmtApis.Agents.FunctionTools
             StaffNameResolverTool.GetTool(),
             ApplyForLeaveTool.GetTool(),
             AutoReplaceShiftsForLeaveTool.GetTool(),
+            ResolveRelativeDateTool.GetTool(),
             //FindAvailableStaffTool.GetTool(),
             //FetchShiftCalendarTool.GetTool(),
             //ShiftSwapTool.GetTool(),

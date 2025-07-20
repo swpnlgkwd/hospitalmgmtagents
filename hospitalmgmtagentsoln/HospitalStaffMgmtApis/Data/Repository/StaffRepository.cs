@@ -21,6 +21,8 @@ namespace HospitalStaffMgmtApis.Data.Repository
 
         // Auto-replace shifts impacted due to leave by assigning alternative staff
         Task<AutoReplaceShiftsForLeaveResponse> AutoReplaceShiftsForLeaveAsync(GetImpactedShiftsByLeaveRequest request);
+
+        Task<List<ShiftScheduleResponse>> GetShiftScheduleBetweenDatesAsync(DateOnly startDate, DateOnly endDate);
     }
 
     // Implementation of staff repository using SQL Server
@@ -160,7 +162,14 @@ namespace HospitalStaffMgmtApis.Data.Repository
         {
             var response = new AutoReplaceShiftsForLeaveResponse();
 
+
             var impactedShifts = await FetchLeaveImpactedShiftsAsync(request);
+            if (impactedShifts == null || !impactedShifts.Any())
+            {
+                // No shifts to replace, return early
+                return response;
+            }
+
             foreach (var impactedShift in impactedShifts)
             {
                 var availableStaff = await FindAvailableStaffForShiftReplacementAsync(impactedShift);
@@ -380,40 +389,50 @@ namespace HospitalStaffMgmtApis.Data.Repository
                 return $"Error during reassignment: {ex.Message}";
             }
         }
+
+        public async Task<List<ShiftScheduleResponse>> GetShiftScheduleBetweenDatesAsync(DateOnly startDate, DateOnly endDate)
+        {
+            var result = new List<ShiftScheduleResponse>();
+
+            using var conn = new SqlConnection(sqlConnectionString);
+            await conn.OpenAsync();
+
+            var cmd = conn.CreateCommand();
+            cmd.CommandText = @"
+        SELECT 
+            sa.shift_date,
+            st.name AS shift_type,
+            d.name AS department_name,
+            s.name AS staff_name,
+            r.role_name AS role
+        FROM PlannedShift sa
+        INNER JOIN Staff s ON sa.assigned_staff_id = s.staff_id
+        INNER JOIN ShiftType st ON sa.shift_type_id = st.shift_type_id
+        INNER JOIN Department d ON s.department_id = d.department_id
+        INNER JOIN Role r ON s.role_id = r.role_id
+        WHERE 
+            sa.shift_date >= @startDate AND sa.shift_date <= @endDate
+        ORDER BY sa.shift_date ASC, st.start_time ASC";
+
+            cmd.Parameters.AddWithValue("@startDate", startDate.ToDateTime(TimeOnly.MinValue));
+            cmd.Parameters.AddWithValue("@endDate", endDate.ToDateTime(TimeOnly.MaxValue));
+
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                result.Add(new ShiftScheduleResponse
+                {
+                    ShiftDate = reader.GetDateTime(reader.GetOrdinal("shift_date")),
+                    ShiftType = reader.GetString(reader.GetOrdinal("shift_type")),
+                    DepartmentName = reader.GetString(reader.GetOrdinal("department_name")),
+                    StaffName = reader.GetString(reader.GetOrdinal("staff_name")),
+                    Role = reader.GetString(reader.GetOrdinal("role"))
+                });
+            }
+
+            return result;
+        }
+
     }
 }
-
-
-//--Fatigue check: no adjacent day shift conflict
-//          AND s.staff_id NOT IN (
-//              SELECT sa.staff_id FROM ShiftAssignments sa
-//              WHERE 
-//                (
-//                  sa.shift_date = DATEADD(DAY, -1, @shiftDate) AND 
-//                  (
-//                    (@shiftType = 'Morning' AND sa.shift_type = 'Night') OR
-//                    (@shiftType = 'Evening' AND sa.shift_type = 'Morning') OR
-//                    (@shiftType = 'Night' AND sa.shift_type = 'Evening')
-//                  )
-//                )
-//                OR
-//                (
-//                  sa.shift_date = DATEADD(DAY, 1, @shiftDate) AND 
-//                  (
-//                    (@shiftType = 'Morning' AND sa.shift_type = 'Evening') OR
-//                    (@shiftType = 'Evening' AND sa.shift_type = 'Night') OR
-//                    (@shiftType = 'Night' AND sa.shift_type = 'Morning')
-//                  )
-//                )
-//          )
-
-
-//Task<List<FindStaffResult>> FindAvailableStaffAsync(FindStaffRequest request);
-//Task<List<ShiftDay>> FetchShiftCalendar(ShiftCalendarRequest request);
-//Task<string> ShiftSwapAsync(ShiftSwapRequest data);
-//Task<string> CancelShiftAssignmentAsync(CancelShiftRequest data);
-//Task<string> SubmitLeaveRequest(LeaveRequest leaveRequest);
-//Task<List<ShiftRecord>> FetchStaffSchedule(StaffScheduleRequest request);
-//Task<string> AssignShiftToStaff(AssignShiftRequest request);
-
 

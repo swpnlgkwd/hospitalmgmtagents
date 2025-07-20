@@ -1,6 +1,7 @@
 using Azure.AI.Agents.Persistent;
 using HospitalStaffMgmtApis.Agents;
 using HospitalStaffMgmtApis.Data.Model;
+using HospitalStaffMgmtApis.Service;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HospitalStaffMgmtApis.Controllers
