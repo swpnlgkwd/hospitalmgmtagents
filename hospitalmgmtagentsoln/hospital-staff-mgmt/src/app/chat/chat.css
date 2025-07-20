@@ -1,0 +1,253 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.chat-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #0078d4;
+  color: white;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  font-size: 24px;
+  text-align: center;
+  line-height: 60px;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 9999;
+}
+
+.chat-window {
+  position: fixed;
+  bottom: 90px;
+  right: 20px;
+  width: 350px;
+  max-height: 500px;
+  display: flex;
+  flex-direction: column;
+  background: #f4f6f8;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  z-index: 9999;
+}
+
+.chat-header {
+  background: #0078d4;
+  color: white;
+  padding: 10px;
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chat-messages {
+  flex-grow: 1;
+  overflow-y: auto;
+  background: #ffffff;
+  font-size: 14px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px; /* spacing between messages */
+}
+
+.user-message,
+.agent-message {
+  display: flex;
+  margin: 5px 10px;
+}
+
+.user-message {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.agent-message {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.message-bubble {
+  border-radius: 20px;
+  max-width: 80%;
+  font-size: 14px;
+  line-height: 1.4;
+  word-wrap: break-word;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  max-width: 70%;
+  word-break: break-word;
+  white-space: pre-wrap;
+  padding: 10px 16px;
+    /* 👇 Add this line */
+  animation: fadeIn 0.6s ease-out;
+}
+
+/* User bubble: light blue */
+.user-message .message-bubble { 
+  align-self: flex-end;
+  background-color: #e0f5ff;
+  color: #004b66;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* Agent bubble: white with blue border */
+.agent-message .message-bubble {
+  border: 1px solid #d6e5f5;
+  align-self: flex-start;
+  font-size: 14px;
+  background-color: #ffffff;
+  border: 1px solid #cdd9e8;
+  color: #333;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.typing-indicator {
+  font-style: italic;
+  font-size: 13px;
+  color: gray;
+  margin: 5px 15px;
+  padding: 5px;
+}
+
+.chat-input {
+  display: flex;
+  border-top: 1px solid #ccc;
+  padding: 10px;
+  background-color: #f1f3f5;
+  border-top: 1px solid #ccc;
+}
+
+.chat-input input {
+  flex-grow: 1;
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.chat-input button {
+  margin-left: 10px;
+  padding: 6px 12px;
+  background: #0078d4;
+  border: none;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+/* 👤 Avatar styling */
+.avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  margin: 0 8px;
+  object-fit: cover;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* 🕓 Timestamp styling */
+.timestamp {
+  font-size: 11px;
+  color: gray;
+  margin-top: 4px;
+  text-align: right;
+}
+
+/* ✨ Fade-in animation for messages */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.user-message,
+.agent-message {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* 🧹 Improve font for readability */
+.chat-messages {
+  font-size: 15px;
+}
+
+/* 🧾 Layout tweaks for message + avatar */
+.user-message,
+.agent-message {
+  display: flex;
+  align-items: flex-end;
+}
+
+/* 👤 User on right, avatar after message */
+.user-message .avatar {
+  order: 2;
+}
+
+/* 👤 Agent on left, avatar before message */
+.agent-message .avatar {
+  order: 0;
+}
+
+/* Add this for nice scrollbars */
+.chat-messages::-webkit-scrollbar {
+  width: 6px;
+}
+.chat-messages::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 3px;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.chat-row {
+  display: flex;
+  align-items: flex-start;
+  margin: 5px 10px;
+}
+
+/* Add left spacing only for agent */
+.agent-message {
+  flex-direction: row;
+}
+
+/* Avatar box */
+.avatar {
+  width: 32px;
+  height: 32px;
+  margin-right: 8px;
+  background-color: #e0f0ff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+/* User messages stay right-aligned, without avatar */
+.user-message {
+  justify-content: flex-end;
+}
+
+.user-message .message-bubble {
+  order: 2; /* keep text on right */
+}

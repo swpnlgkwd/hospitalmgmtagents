@@ -1,0 +1,48 @@
+<!-- Floating Chat Button -->
+<div class="chat-button" (click)="toggleChat()">💬</div>
+
+<!-- Chat Window -->
+<div class="chat-window" *ngIf="showChat">
+  <div class="chat-header">
+    <span>Hospital Assistant</span>
+    <button class="close-btn" (click)="toggleChat()">×</button>
+  </div>
+
+  <!-- Chat Messages -->
+  <div class="chat-messages" #chatContainer>
+    <div
+      *ngFor="let message of messages"
+      class="chat-row"
+      [ngClass]="{
+        'user-message': message.sender === 'User',
+        'agent-message': message.sender === 'Agent'
+      }"
+    >
+      <ng-container *ngIf="message.sender === 'Agent'">
+        <div class="avatar">🤖</div>
+        <div class="message-bubble">{{ message.text }}</div>
+      </ng-container>
+       <ng-container *ngIf="message.sender === 'User'">
+        <div class="avatar user-avatar">🧑</div>
+        <div class="message-bubble">{{ message.text }}</div>
+      </ng-container>
+    </div>
+
+    <!-- Assistant typing indicator -->
+    <div *ngIf="isWaiting" class="typing-indicator">
+      Assistant is typing...
+    </div>
+  </div>
+
+  <!-- Chat Input -->
+  <div class="chat-input">
+    <input
+      type="text"
+      [(ngModel)]="messageText"
+      (keyup.enter)="sendMessage()"
+      [disabled]="isWaiting"
+      placeholder="Type your message..."
+    />
+    <button (click)="sendMessage()" [disabled]="isWaiting">Send</button>
+  </div>
+</div>
