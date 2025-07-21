@@ -36,21 +36,20 @@ CREATE TABLE Staff (
     CONSTRAINT FK_Staff_Department FOREIGN KEY (department_id) REFERENCES Department(department_id)
 );
 
+CREATE TABLE UserCredential (
+    credential_id INT IDENTITY(1,1) PRIMARY KEY,
+    staff_id INT NOT NULL UNIQUE,   -- One-to-one with Staff
+    username NVARCHAR(100) NOT NULL UNIQUE,
+    password_hash NVARCHAR(256) NOT NULL,
+    CONSTRAINT FK_UserCredential_Staff FOREIGN KEY (staff_id) REFERENCES Staff(staff_id)
+);
+
+
 -- Index for fast lookups on department-based staff queries
 CREATE INDEX IX_Staff_DepartmentId ON Staff(department_id);
 CREATE INDEX IX_Staff_RoleId ON Staff(role_id);
 
--- 6. ShiftPlanning Table
-CREATE TABLE ShiftPlanning (
-    shift_date DATE NOT NULL,
-    shift_type_id INT NOT NULL,
-    department_id INT NOT NULL,
-    required_nurses INT NOT NULL CHECK (required_nurses >= 0),
 
-    CONSTRAINT PK_ShiftPlanning PRIMARY KEY (shift_date, shift_type_id, department_id),
-    CONSTRAINT FK_ShiftPlanning_ShiftType FOREIGN KEY (shift_type_id) REFERENCES ShiftType(shift_type_id),
-    CONSTRAINT FK_ShiftPlanning_Department FOREIGN KEY (department_id) REFERENCES Department(department_id)
-);
 
 -- 7. PlannedShift Table
 CREATE TABLE PlannedShift (
@@ -72,18 +71,7 @@ CREATE TABLE PlannedShift (
 -- Optional index to speed up available slot lookup
 CREATE INDEX IX_PlannedShift_DateTypeDept ON PlannedShift(shift_date, shift_type_id, department_id);
 
--- 8. ShiftAssignments Table
-CREATE TABLE ShiftAssignments (
-    id INT IDENTITY(1,1) PRIMARY KEY,
-    staff_id INT NOT NULL,
-    shift_date DATE NOT NULL,
-    shift_type_id INT NOT NULL,
 
-    CONSTRAINT FK_ShiftAssignments_Staff FOREIGN KEY (staff_id) REFERENCES Staff(staff_id),
-    CONSTRAINT FK_ShiftAssignments_ShiftType FOREIGN KEY (shift_type_id) REFERENCES ShiftType(shift_type_id)
-);
-
-CREATE INDEX IX_ShiftAssignments_StaffDate ON ShiftAssignments(staff_id, shift_date);
 
 -- 9. LeaveRequests Table
 CREATE TABLE LeaveRequests (

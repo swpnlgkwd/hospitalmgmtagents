@@ -2,6 +2,7 @@ using Azure.AI.Agents.Persistent;
 using HospitalStaffMgmtApis.Agents;
 using HospitalStaffMgmtApis.Agents.Services;
 using HospitalStaffMgmtApis.Data.Model;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HospitalStaffMgmtApis.Controllers
@@ -9,9 +10,11 @@ namespace HospitalStaffMgmtApis.Controllers
     /// <summary>
     /// API controller to handle chat-based interaction with the persistent AI agent.
     /// </summary>
+    [Authorize]
     [ApiController]
     [Route("[controller]")]
-    public class AuthController : ControllerBase
+
+    public class AgentChatController : ControllerBase
     {
         private readonly AgentService _agentService;
 
@@ -19,7 +22,7 @@ namespace HospitalStaffMgmtApis.Controllers
         /// Initializes a new instance of the <see cref="AuthController"/> class.
         /// </summary>
         /// <param name="agentService">Service to handle agent communication.</param>
-        public AuthController(AgentService agentService)
+        public AgentChatController(AgentService agentService)
         {
             _agentService = agentService;
         }

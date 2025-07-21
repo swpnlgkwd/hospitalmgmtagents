@@ -1,5 +1,5 @@
 ﻿using Azure.AI.Agents.Persistent;
-using HospitalStaffMgmtApis.Agents;
+using HospitalStaffMgmtApis.Agents.Handlers;
 using HospitalStaffMgmtApis.Data.Repository;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
@@ -62,7 +62,7 @@ namespace HospitalStaffMgmtApis.Agents.Services
 
             do
             {
-                Thread.Sleep(500);
+               Thread.Sleep(500);
                 run = _client.Runs.GetRun(thread.Id, run.Id);
 
                 if (run.Status == RunStatus.RequiresAction &&

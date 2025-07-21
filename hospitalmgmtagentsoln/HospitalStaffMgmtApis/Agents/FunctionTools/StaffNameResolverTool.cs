@@ -9,7 +9,7 @@ namespace HospitalStaffMgmtApis.Agents.FunctionTools
         {
             return new FunctionToolDefinition(
                 name: "staffNameResolverTool",
-                description: "Resolves a partial or full staff name (e.g., 'Dr Amit') to a list of matching staff members with their unique IDs. Use this when you need to identify a staff member from a name.",
+                description: "Whenever you received a any phrase with partial name in a prompt ,Resolves a partial or full staff name (e.g., 'Dr Amit') to a list of matching staff members with their unique IDs. Use this when you need to identify a staff member from a name.",
                 parameters: BinaryData.FromObjectAsJson(
                     new
                     {

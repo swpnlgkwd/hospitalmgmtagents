@@ -1,5 +1,7 @@
 ﻿using HospitalStaffMgmtApis.Data.Model;
 using HospitalStaffMgmtApis.Data.Repository;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace HospitalStaffMgmtApis.Business
 {
@@ -9,13 +11,16 @@ namespace HospitalStaffMgmtApis.Business
     public class ScheduleManager : IScheduleManager
     {
         private readonly IStaffRepository _repository;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ScheduleManager"/> class.
         /// </summary>
         /// <param name="staffRepository">Repository used to access staff scheduling data.</param>
-        public ScheduleManager(IStaffRepository staffRepository)
+        public ScheduleManager(IStaffRepository staffRepository, 
+            IHttpContextAccessor httpContextAccessor)
         {
+            _httpContextAccessor = httpContextAccessor;
             _repository = staffRepository;
         }
 
@@ -25,9 +30,24 @@ namespace HospitalStaffMgmtApis.Business
         /// <param name="startDate">The start date of the date range (inclusive).</param>
         /// <param name="endDate">The end date of the date range (inclusive).</param>
         /// <returns>A list of shift schedules within the given date range.</returns>
-        public Task<List<ShiftScheduleResponse>> FetchShiftInformation(DateOnly startDate, DateOnly endDate)
+        public async Task<List<ShiftScheduleResponse>> FetchShiftInformation(DateOnly startDate, DateOnly endDate)
         {
-            return _repository.GetShiftScheduleBetweenDatesAsync(startDate, endDate);
+            var user = _httpContextAccessor.HttpContext?.User;
+            var role = user?.FindFirst(ClaimTypes.Role)?.Value;
+
+            var staffId = Convert.ToInt32( user?.FindFirst(ClaimTypes.NameIdentifier).Value );       
+         
+            if (role.Trim() == "Scheduler")
+            {
+                // Show all shifts
+                return await _repository.GetShiftScheduleBetweenDatesAsync(startDate, endDate);
+            }
+            else
+            {
+                // Show only this user's shifts
+                return await _repository.FetchShiftInformationByStaffId(staffId, startDate, endDate);
+            }
         }
+
     }
 }

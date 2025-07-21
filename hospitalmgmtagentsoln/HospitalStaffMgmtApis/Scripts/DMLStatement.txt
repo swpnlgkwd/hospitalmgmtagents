@@ -1,3 +1,4 @@
+Password123
 -- ==============================================
 -- MASTER DATA INSERTS
 -- ==============================================
@@ -145,3 +146,16 @@ INSERT INTO NurseAvailability (staff_id, available_date, is_available, shift_typ
 (4, '2025-07-19', 1, NULL, NULL),
 (4, '2025-07-20', 0, NULL, 'On Sick Leave'),
 (4, '2025-07-21', 0, NULL, 'On Sick Leave');
+
+
+
+INSERT INTO UserCredential (staff_id, username, password_hash)
+VALUES 
+(1, 'asha', '$2a$12$5jorsqANhQeUqVS5iCo.r.CvA2y90mNJjdJZ87833Ffe3QXk7v9KW'),
+(2, 'sunita', '$2a$12$5jorsqANhQeUqVS5iCo.r.CvA2y90mNJjdJZ87833Ffe3QXk7v9KW'),
+(3, 'meena', '$2a$12$5jorsqANhQeUqVS5iCo.r.CvA2y90mNJjdJZ87833Ffe3QXk7v9KW'),
+(4, 'rekha', '$2a$12$5jorsqANhQeUqVS5iCo.r.CvA2y90mNJjdJZ87833Ffe3QXk7v9KW'),
+(5, 'shweta', '$2a$12$5jorsqANhQeUqVS5iCo.r.CvA2y90mNJjdJZ87833Ffe3QXk7v9KW'),
+(6, 'swapnil', '$2a$12$5jorsqANhQeUqVS5iCo.r.CvA2y90mNJjdJZ87833Ffe3QXk7v9KW');
+
+

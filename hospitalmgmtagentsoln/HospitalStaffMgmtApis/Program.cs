@@ -1,13 +1,19 @@
-using Azure;
+﻿using Azure;
 using Azure.AI.Agents.Persistent;
 using Azure.Identity;
 using HospitalStaffMgmtApis.Agents;
 using HospitalStaffMgmtApis.Agents.AgentStore;
 using HospitalStaffMgmtApis.Agents.Handlers;
+using HospitalStaffMgmtApis.Agents.Services;
 using HospitalStaffMgmtApis.Business;
+using HospitalStaffMgmtApis.Business.Auth;
+using HospitalStaffMgmtApis.Business.Auth.Services;
 using HospitalStaffMgmtApis.Data.Repository;
-using HospitalStaffMgmtApis.Service;
+using HospitalStaffMgmtApis.Data.Repository.Auth;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,7 +25,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAll", policy =>
     {
         policy
-            .AllowAnyOrigin() // ?? allows any origin
+            .AllowAnyOrigin() // 👈 allows any origin
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -34,7 +40,16 @@ builder.Services.AddSingleton<IStaffRepository>(provider =>
     return new StaffRepository(connectionString);
 });
 
-// Register PersistentAgentsClient (singleton � shared across app)
+builder.Services.AddScoped<IAuthRepository>(provider =>
+{
+    var config = provider.GetRequiredService<IConfiguration>();
+    var connectionString = config.GetConnectionString("DefaultConnection")
+        ?? throw new ArgumentNullException("Default Connection Missing");
+
+    return new AuthRepository(connectionString);
+});
+
+// Register PersistentAgentsClient (singleton – shared across app)
 builder.Services.AddSingleton<PersistentAgentsClient>(sp =>
 {
     var endpoint = configuration["ProjectEndpoint"];
@@ -54,6 +69,33 @@ builder.Services.AddSingleton<IAgentStore, FileAgentStore>();
 builder.Services.AddSingleton<IAgentManager, AgentManager>();
 builder.Services.AddSingleton<IScheduleManager, ScheduleManager>();
 
+builder.Services.AddScoped<IAuthManager, AuthManager>();
+builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+
+
+var key = builder.Configuration["Jwt:Key"];
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false; // for dev only
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key))
+    };
+}); 
+builder.Services.AddAuthorization();
+
 // Register AgentService with dependencies
 builder.Services.AddScoped<AgentService>(sp =>
 {
@@ -67,12 +109,15 @@ builder.Services.AddScoped<AgentService>(sp =>
     return new AgentService(client, agent, staffRepo, toolHandlers, logger);
 });
 
+builder.Services.AddHttpContextAccessor();
+
 // Add MVC and Swagger support
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
 // Apply CORS policy
 app.UseCors("AllowAll");
 
@@ -83,7 +128,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
+
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 

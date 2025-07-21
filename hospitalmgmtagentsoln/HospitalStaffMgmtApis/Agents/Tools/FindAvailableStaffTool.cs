@@ -3,7 +3,7 @@ using System.Text.Json;
 
 namespace HospitalStaffMgmtApis.Agents.Tools
 {
-    public static class FindAvailableStaffTool
+    public static class FindAvailableStaff
     {
         public static FunctionToolDefinition GetTool()
         {

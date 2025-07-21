@@ -1,6 +1,5 @@
 ﻿using Azure.Core;
 using HospitalStaffMgmtApis.Data.Model;
-using HospitalStaffMgmtApis.Data.Models;
 using Microsoft.Recognizers.Text.DateTime;
 using System.Data.SqlClient;
 using System.Text.Json.Serialization;
@@ -24,6 +23,10 @@ namespace HospitalStaffMgmtApis.Data.Repository
 
         Task<List<ShiftScheduleResponse>> GetShiftScheduleBetweenDatesAsync(DateOnly startDate, DateOnly endDate);
         Task<bool> SwapShiftsAsync(SwapShiftRequest request);
+        Task<List<ShiftScheduleResponse>> FetchShiftInformationByStaffId(int staffId, DateOnly startDate, DateOnly endDate);
+
+
+       // Task FetchCoverageByDateRangeAsync(Coverage coverage);
 
     }
 
@@ -435,6 +438,53 @@ namespace HospitalStaffMgmtApis.Data.Repository
             return result;
         }
 
+        public async Task<List<ShiftScheduleResponse>> FetchShiftInformationByStaffId(int staffId, DateOnly startDate, DateOnly endDate)
+        {
+            var result = new List<ShiftScheduleResponse>();
+
+            using var conn = new SqlConnection(sqlConnectionString);
+            await conn.OpenAsync();
+
+            var cmd = conn.CreateCommand();
+            cmd.CommandText = @"
+        SELECT 
+            sa.shift_date,
+            st.name AS shift_type,
+            d.name AS department_name,
+            s.name AS staff_name,
+            r.role_name AS role
+        FROM PlannedShift sa
+        INNER JOIN Staff s ON sa.assigned_staff_id = s.staff_id
+        INNER JOIN ShiftType st ON sa.shift_type_id = st.shift_type_id
+        INNER JOIN Department d ON s.department_id = d.department_id
+        INNER JOIN Role r ON s.role_id = r.role_id
+        WHERE 
+            sa.shift_date >= @startDate 
+            AND sa.shift_date <= @endDate
+            AND sa.assigned_staff_id = @staffId
+        ORDER BY sa.shift_date ASC, st.start_time ASC";
+
+            cmd.Parameters.AddWithValue("@startDate", startDate.ToDateTime(TimeOnly.MinValue));
+            cmd.Parameters.AddWithValue("@endDate", endDate.ToDateTime(TimeOnly.MaxValue));
+            cmd.Parameters.AddWithValue("@staffId", staffId);
+
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                result.Add(new ShiftScheduleResponse
+                {
+                    ShiftDate = reader.GetDateTime(reader.GetOrdinal("shift_date")),
+                    ShiftType = reader.GetString(reader.GetOrdinal("shift_type")),
+                    DepartmentName = reader.GetString(reader.GetOrdinal("department_name")),
+                    StaffName = reader.GetString(reader.GetOrdinal("staff_name")),
+                    Role = reader.GetString(reader.GetOrdinal("role"))
+                });
+            }
+
+            return result;
+        }
+
+
         public async Task<bool> SwapShiftsAsync(SwapShiftRequest request)
         {
             using var conn = new SqlConnection(sqlConnectionString);
@@ -546,6 +596,50 @@ namespace HospitalStaffMgmtApis.Data.Repository
                 return false;
             }
         }
+
+        //public async Task<List<ShiftScheduleResponse>> FetchCoverageByDateRangeAsync(Coverage request)
+        //{
+        //    var result = new List<ShiftScheduleResponse>();
+
+        //    using var conn = new SqlConnection(sqlConnectionString);
+        //    await conn.OpenAsync();
+
+        //    var cmd = conn.CreateCommand();
+        //    cmd.CommandText = @"
+        //SELECT 
+        //    sa.shift_date,
+        //    st.name AS shift_type,
+        //    d.name AS department_name,
+        //    s.name AS staff_name,
+        //    r.role_name AS role
+        //FROM PlannedShift sa
+        //INNER JOIN Staff s ON sa.assigned_staff_id = s.staff_id
+        //INNER JOIN ShiftType st ON sa.shift_type_id = st.shift_type_id
+        //INNER JOIN Department d ON s.department_id = d.department_id
+        //INNER JOIN Role r ON s.role_id = r.role_id
+        //WHERE 
+        //    sa.shift_date >= @startDate AND sa.shift_date <= @endDate
+        //ORDER BY sa.shift_date ASC, st.start_time ASC";
+
+        //    cmd.Parameters.AddWithValue("@startDate", startDate.ToDateTime(TimeOnly.MinValue));
+        //    cmd.Parameters.AddWithValue("@endDate", endDate.ToDateTime(TimeOnly.MaxValue));
+
+        //    using var reader = await cmd.ExecuteReaderAsync();
+        //    while (await reader.ReadAsync())
+        //    {
+        //        result.Add(new ShiftScheduleResponse
+        //        {
+        //            ShiftDate = reader.GetDateTime(reader.GetOrdinal("shift_date")),
+        //            ShiftType = reader.GetString(reader.GetOrdinal("shift_type")),
+        //            DepartmentName = reader.GetString(reader.GetOrdinal("department_name")),
+        //            StaffName = reader.GetString(reader.GetOrdinal("staff_name")),
+        //            Role = reader.GetString(reader.GetOrdinal("role"))
+        //        });
+        //    }
+
+        //    return result;
+        //}
+
 
     }
 }
