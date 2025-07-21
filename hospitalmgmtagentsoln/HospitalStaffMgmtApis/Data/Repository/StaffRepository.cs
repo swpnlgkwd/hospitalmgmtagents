@@ -299,78 +299,6 @@ namespace HospitalStaffMgmtApis.Data.Repository
             return result;
         }
 
-        /// <summary>
-        /// Finds available staff who are not assigned, not on leave, and marked available for a given shift.
-        /// </summary>
-        /// <param name="request">Shift details impacted by leave.</param>
-        /// <returns>List of available staff for replacement.</returns>
-        public async Task<List<FindStaffResult>> FindAvailableStaffForShiftReplacementAsync(LeaveImpactedShiftResponse request)
-        {
-            var result = new List<FindStaffResult>();
-
-            using var conn = new SqlConnection(sqlConnectionString);
-            await conn.OpenAsync();
-
-            var cmd = conn.CreateCommand();
-            cmd.CommandText = @"
-        SELECT 
-            s.staff_id, 
-            s.name, 
-            d.name AS department
-        FROM Staff s
-        JOIN Department d ON s.department_id = d.department_id
-        WHERE 
-            s.is_active = 1
-
-            -- Exclude staff who have explicitly said they are NOT available for this date & shift
-            AND NOT EXISTS (
-                SELECT 1 
-                FROM NurseAvailability a
-                WHERE a.staff_id = s.staff_id
-                  AND a.available_date = @shiftDate
-                  AND a.shift_type_id = @shiftType
-                  AND a.is_available = 0
-            )
-
-            -- Exclude staff who are already assigned to this shift on that date
-            AND NOT EXISTS (
-                SELECT 1 
-                FROM PlannedShift sa
-                WHERE sa.assigned_staff_id = s.staff_id 
-                  AND sa.shift_date = @shiftDate 
-                  AND sa.shift_type_id = @shiftType
-            )
-
-            -- Exclude staff who are on approved leave on this date
-            AND NOT EXISTS (
-                SELECT 1 
-                FROM LeaveRequests lr
-                WHERE lr.staff_id = s.staff_id 
-                  AND lr.status = 'Approved'
-                  AND @shiftDate BETWEEN lr.leave_start AND lr.leave_end
-            );
-    ";
-
-            var departmentId = await GetDepartmentIdByNameAsync(request.Department);
-            var shiftTypeID = await GetShiftTypeIdByNameAsync(request.ShiftType);
-
-            cmd.Parameters.AddWithValue("@department", (object?)departmentId ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@shiftDate", request.ShiftDate);
-            cmd.Parameters.AddWithValue("@shiftType", shiftTypeID);
-
-            using var reader = await cmd.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                result.Add(new FindStaffResult
-                {
-                    StaffId = reader.GetInt32(reader.GetOrdinal("staff_id")),
-                    Name = reader["name"] as string ?? "",
-                    Department = reader["department"] as string ?? ""
-                });
-            }
-
-            return result;
-        }
 
         /// <summary>
         /// Finds staff available for assignment during a given date or range, based on department, role, and shift type.
@@ -470,42 +398,6 @@ namespace HospitalStaffMgmtApis.Data.Repository
         }
 
         /// <summary>
-        /// Assigns a new staff member to a planned shift by updating the relevant record.
-        /// </summary>
-        /// <param name="request">Contains the staff ID and shift ID to update.</param>
-        /// <returns>
-        /// A message indicating the success or failure of the assignment.
-        /// </returns>
-        public async Task<string> AssignStaffToShiftAsync(AutoAssignShiftRequest request)
-        {
-            using var conn = new SqlConnection(sqlConnectionString);
-            await conn.OpenAsync();
-            using var transaction = conn.BeginTransaction();
-
-            try
-            {
-                // Update the PlannedShift table to assign the new staff member
-                var updatePlannedCmd = new SqlCommand(@"
-            UPDATE PlannedShift 
-            SET assigned_staff_id = @newStaffId 
-            WHERE planned_shift_id = @shiftId", conn, transaction);
-
-                updatePlannedCmd.Parameters.AddWithValue("@newStaffId", request.StaffId);
-                updatePlannedCmd.Parameters.AddWithValue("@shiftId", request.ShiftId);
-
-                await updatePlannedCmd.ExecuteNonQueryAsync();
-
-                await transaction.CommitAsync();
-                return "Shift reassigned successfully.";
-            }
-            catch (Exception ex)
-            {
-                await transaction.RollbackAsync();
-                return $"Error during reassignment: {ex.Message}";
-            }
-        }
-
-        /// <summary>
         /// Retrieves the list of all assigned shifts between the specified dates.
         /// </summary>
         /// <param name="startDate">The start date of the range.</param>
@@ -555,7 +447,6 @@ namespace HospitalStaffMgmtApis.Data.Repository
 
             return result;
         }
-
 
 
         /// <summary>
@@ -778,6 +669,116 @@ namespace HospitalStaffMgmtApis.Data.Repository
 
             var result = await cmd.ExecuteScalarAsync();
             return result != null ? (int?)Convert.ToInt32(result) : null;
+        }
+
+        /// <summary>
+        /// Finds available staff who are not assigned, not on leave, and marked available for a given shift.
+        /// </summary>
+        /// <param name="request">Shift details impacted by leave.</param>
+        /// <returns>List of available staff for replacement.</returns>
+        private async Task<List<FindStaffResult>> FindAvailableStaffForShiftReplacementAsync(LeaveImpactedShiftResponse request)
+        {
+            var result = new List<FindStaffResult>();
+
+            using var conn = new SqlConnection(sqlConnectionString);
+            await conn.OpenAsync();
+
+            var cmd = conn.CreateCommand();
+            cmd.CommandText = @"
+        SELECT 
+            s.staff_id, 
+            s.name, 
+            d.name AS department
+        FROM Staff s
+        JOIN Department d ON s.department_id = d.department_id
+        WHERE 
+            s.is_active = 1
+
+            -- Exclude staff who have explicitly said they are NOT available for this date & shift
+            AND NOT EXISTS (
+                SELECT 1 
+                FROM NurseAvailability a
+                WHERE a.staff_id = s.staff_id
+                  AND a.available_date = @shiftDate
+                  AND a.shift_type_id = @shiftType
+                  AND a.is_available = 0
+            )
+
+            -- Exclude staff who are already assigned to this shift on that date
+            AND NOT EXISTS (
+                SELECT 1 
+                FROM PlannedShift sa
+                WHERE sa.assigned_staff_id = s.staff_id 
+                  AND sa.shift_date = @shiftDate 
+                  AND sa.shift_type_id = @shiftType
+            )
+
+            -- Exclude staff who are on approved leave on this date
+            AND NOT EXISTS (
+                SELECT 1 
+                FROM LeaveRequests lr
+                WHERE lr.staff_id = s.staff_id 
+                  AND lr.status = 'Approved'
+                  AND @shiftDate BETWEEN lr.leave_start AND lr.leave_end
+            );
+    ";
+
+            var departmentId = await GetDepartmentIdByNameAsync(request.Department);
+            var shiftTypeID = await GetShiftTypeIdByNameAsync(request.ShiftType);
+
+            cmd.Parameters.AddWithValue("@department", (object?)departmentId ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@shiftDate", request.ShiftDate);
+            cmd.Parameters.AddWithValue("@shiftType", shiftTypeID);
+
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                result.Add(new FindStaffResult
+                {
+                    StaffId = reader.GetInt32(reader.GetOrdinal("staff_id")),
+                    Name = reader["name"] as string ?? "",
+                    Department = reader["department"] as string ?? ""
+                });
+            }
+
+            return result;
+        }
+
+
+        /// <summary>
+        /// Assigns a new staff member to a planned shift by updating the relevant record.
+        /// </summary>
+        /// <param name="request">Contains the staff ID and shift ID to update.</param>
+        /// <returns>
+        /// A message indicating the success or failure of the assignment.
+        /// </returns>
+        public async Task<string> AssignStaffToShiftAsync(AutoAssignShiftRequest request)
+        {
+            using var conn = new SqlConnection(sqlConnectionString);
+            await conn.OpenAsync();
+            using var transaction = conn.BeginTransaction();
+
+            try
+            {
+                // Update the PlannedShift table to assign the new staff member
+                var updatePlannedCmd = new SqlCommand(@"
+            UPDATE PlannedShift 
+            SET assigned_staff_id = @newStaffId 
+            WHERE planned_shift_id = @shiftId", conn, transaction);
+
+                updatePlannedCmd.Parameters.AddWithValue("@newStaffId", request.StaffId);
+                updatePlannedCmd.Parameters.AddWithValue("@shiftId", request.ShiftId);
+
+                await updatePlannedCmd.ExecuteNonQueryAsync();
+
+                await transaction.CommitAsync();
+                return "Shift reassigned successfully.";
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return $"Error during reassignment: {ex.Message}";
+            }
         }
 
         #endregion

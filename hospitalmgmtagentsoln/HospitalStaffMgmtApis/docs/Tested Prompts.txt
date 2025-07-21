@@ -1,10 +1,7 @@
 
 
-Password123
-Working Prompt
 
- - GetShiftSchedulePrompt
-: Basic Queries By Staff
+Working Prompt
 
 1. Show ICU Morning shifts for this week
 
@@ -47,49 +44,6 @@ FindAvailableStaffPrompt
 
  - Help me reassign a shift — who is eligible and free?
 
-
-
-
-
-
-
-	  Basic Queries by Staff
-"Show me the shift schedule of Neha Patil."
-(Should match staff name → resolve ID → fetch full schedule)
-
-"When is Anil Sharma working next?"
-(Should filter by staff name and today or future dates)
-
-"Give me last week's schedule for Ravi Iyer."
-(Date range + staff filter)
-
-
-
-🔹 Shift Type Filtering
-"Show all morning shift assignments for July 20th."
-(ShiftType = Morning, Date = 2025-07-20)
-
-"List who is on night shift today."
-(ShiftType = Night, Date = today)
-
-🔹 Combined Queries
-"Show me Neha Patil’s schedule in OPD for this week."
-(Staff name → ID, Department = OPD, Date range = current week)
-
-"Get all ICU nurse morning shifts from July 15 to July 21."
-(Department = ICU, Role = Nurse, ShiftType = Morning, Date range)
-
-"Who had any shifts in Pediatrics between July 10 and July 18?"
-
-🔹 Edge Case / Robustness Testing
-"Show me the schedule for a staff member named 'XYZ'" (non-existent name)
-(Should gracefully return empty result)
-
-"Get schedule for OPD from August 1 to August 10" (future dates)
-(Should return only upcoming/planned shifts)
-
-"Give me shift history for staff ID 9999"
-(Should handle invalid ID gracefully)
 
 
 
