@@ -1,6 +1,6 @@
 ﻿using HospitalStaffMgmtApis.Data.Model.Auth;
 
-namespace HospitalStaffMgmtApis.Data.Repository.Auth
+namespace HospitalStaffMgmtApis.Data.Repository.Interfaces
 {
     public interface IAuthRepository
     {

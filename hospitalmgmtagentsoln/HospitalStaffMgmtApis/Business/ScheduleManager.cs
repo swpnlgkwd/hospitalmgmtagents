@@ -1,5 +1,6 @@
-﻿using HospitalStaffMgmtApis.Data.Model;
-using HospitalStaffMgmtApis.Data.Repository;
+﻿using HospitalStaffMgmtApis.Business.Interfaces;
+using HospitalStaffMgmtApis.Data.Model;
+using HospitalStaffMgmtApis.Data.Repository.Interfaces;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 

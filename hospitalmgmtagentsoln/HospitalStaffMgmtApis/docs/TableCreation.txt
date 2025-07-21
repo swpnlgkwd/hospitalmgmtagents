@@ -44,6 +44,18 @@ CREATE TABLE UserCredential (
     CONSTRAINT FK_UserCredential_Staff FOREIGN KEY (staff_id) REFERENCES Staff(staff_id)
 );
 
+CREATE TABLE SmartSuggestions (
+    suggestion_id INT PRIMARY KEY IDENTITY,
+    user_id INT NOT NULL,
+    text NVARCHAR(255) NOT NULL,
+    action_name NVARCHAR(100) NOT NULL,
+    parameters NVARCHAR(MAX), -- JSON
+    is_dismissed BIT DEFAULT 0,
+    created_at DATETIME DEFAULT GETDATE(),
+    expires_at DATETIME NULL
+);
+
+
 
 -- Index for fast lookups on department-based staff queries
 CREATE INDEX IX_Staff_DepartmentId ON Staff(department_id);

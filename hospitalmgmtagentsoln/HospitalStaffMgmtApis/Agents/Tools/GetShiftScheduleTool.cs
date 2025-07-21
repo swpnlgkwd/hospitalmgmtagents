@@ -1,7 +1,7 @@
 ﻿using Azure.AI.Agents.Persistent;
 using System.Text.Json;
 
-namespace HospitalStaffMgmtApis.Agents.FunctionTools
+namespace HospitalStaffMgmtApis.Agents.Tools
 {
     public static class GetShiftScheduleTool
     {

@@ -1,7 +1,7 @@
 ﻿using HospitalStaffMgmtApis.Data.Model;
 using HospitalStaffMgmtApis.Data.Model.HospitalStaffMgmtApis.Models.Requests.HospitalStaffMgmtApis.Models.Requests;
 
-namespace HospitalStaffMgmtApis.Data.Repository
+namespace HospitalStaffMgmtApis.Data.Repository.Interfaces
 {
     // Interface defining the contract for staff-related data operations
     public interface IStaffRepository

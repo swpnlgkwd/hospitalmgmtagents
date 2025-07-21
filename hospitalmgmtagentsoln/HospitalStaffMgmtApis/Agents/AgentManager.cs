@@ -2,7 +2,7 @@
 using Azure.AI.Agents.Persistent;
 using Azure.Identity;
 using HospitalStaffMgmtApis.Agents.AgentStore;
-using HospitalStaffMgmtApis.Agents.FunctionTools;
+using HospitalStaffMgmtApis.Agents.Tools;
 using Microsoft.Extensions.Configuration;
 using System.Data.SqlClient;
 using System.Net;
@@ -99,7 +99,7 @@ namespace HospitalStaffMgmtApis.Agents
             }
 
             // Not found — create new agent
-            string systemPromptPath = Path.Combine("SystemInstruction", "systemprompt.txt");
+            string systemPromptPath = Path.Combine("SystemPrompt", "systemprompt.txt");
 
             if (!File.Exists(systemPromptPath))
                 throw new FileNotFoundException($"System prompt file not found at: {systemPromptPath}");

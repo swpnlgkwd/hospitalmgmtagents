@@ -1,6 +1,4 @@
-
-using HospitalStaffMgmtApis.Business.Auth;
-using HospitalStaffMgmtApis.Business.Auth.Services;
+using HospitalStaffMgmtApis.Business.Interfaces;
 using HospitalStaffMgmtApis.Data.Model.Account;
 using Microsoft.AspNetCore.Mvc;
 

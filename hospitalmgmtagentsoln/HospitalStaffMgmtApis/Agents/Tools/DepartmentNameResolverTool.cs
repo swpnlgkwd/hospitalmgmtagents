@@ -1,7 +1,7 @@
 ﻿using Azure.AI.Agents.Persistent;
 using System.Text.Json;
 
-namespace HospitalStaffMgmtAgent.Tools
+namespace HospitalStaffMgmtApis.Agents.Tools
 {
     /// <summary>
     /// Tool definition for resolving department name (full or partial) to department ID.

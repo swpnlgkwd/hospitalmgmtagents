@@ -1,6 +1,6 @@
 ﻿using HospitalStaffMgmtApis.Data.Model;
 
-namespace HospitalStaffMgmtApis.Business
+namespace HospitalStaffMgmtApis.Business.Interfaces
 {
     /// <summary>
     /// Interface for managing schedule-related business logic.

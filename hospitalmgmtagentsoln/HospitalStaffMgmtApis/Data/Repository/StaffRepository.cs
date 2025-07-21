@@ -1,6 +1,7 @@
 ﻿using Azure.Core;
 using HospitalStaffMgmtApis.Data.Model;
 using HospitalStaffMgmtApis.Data.Model.HospitalStaffMgmtApis.Models.Requests.HospitalStaffMgmtApis.Models.Requests;
+using HospitalStaffMgmtApis.Data.Repository.Interfaces;
 using Microsoft.Recognizers.Text.DateTime;
 using System.Data.SqlClient;
 using System.Text.Json.Serialization;

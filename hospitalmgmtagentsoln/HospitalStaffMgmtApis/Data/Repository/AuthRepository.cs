@@ -1,5 +1,5 @@
 ﻿using HospitalStaffMgmtApis.Data.Model.Auth;
-using HospitalStaffMgmtApis.Data.Repository.Auth;
+using HospitalStaffMgmtApis.Data.Repository.Interfaces;
 using System.Data.SqlClient;
 
 namespace HospitalStaffMgmtApis.Data.Repository

@@ -1,7 +1,7 @@
 ﻿using Azure.AI.Agents.Persistent;
 using System.Text.Json;
 
-namespace HospitalStaffMgmtApis.Agents.FunctionTools
+namespace HospitalStaffMgmtApis.Agents.Tools
 {
     /// <summary>
     /// Provides tool definition for resolving relative date phrases into exact yyyy-MM-dd format.

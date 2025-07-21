@@ -1,8 +1,8 @@
-﻿using HospitalStaffMgmtApis.Business.Auth.Services;
+﻿using HospitalStaffMgmtApis.Business.Interfaces;
 using HospitalStaffMgmtApis.Data.Model.Account;
-using HospitalStaffMgmtApis.Data.Repository.Auth;
+using HospitalStaffMgmtApis.Data.Repository.Interfaces;
 
-namespace HospitalStaffMgmtApis.Business.Auth
+namespace HospitalStaffMgmtApis.Business
 {
     public class AuthManager : IAuthManager
     {

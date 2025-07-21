@@ -1,6 +1,6 @@
 ﻿using Azure.AI.Agents.Persistent;
-using HospitalStaffMgmtApis.Agents.FunctionTools;
-using HospitalStaffMgmtApis.Data.Repository;
+using HospitalStaffMgmtApis.Agents.Tools;
+using HospitalStaffMgmtApis.Data.Repository.Interfaces;
 using System.Text.Json;
 
 namespace HospitalStaffMgmtApis.Agents.Handlers

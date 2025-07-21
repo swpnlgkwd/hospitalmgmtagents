@@ -2,7 +2,7 @@
 using HospitalStaffMgmtApis.Agents.FunctionTools;
 using HospitalStaffMgmtApis.Agents.FunctionTools.HospitalStaffMgmtApis.Agents.FunctionTools.HospitalStaffMgmtApis.Agents.FunctionTools.HospitalStaffMgmtApis.Agents.FunctionTools;
 using HospitalStaffMgmtApis.Data.Model.HospitalStaffMgmtApis.Models.Requests.HospitalStaffMgmtApis.Models.Requests;
-using HospitalStaffMgmtApis.Data.Repository;
+using HospitalStaffMgmtApis.Data.Repository.Interfaces;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 

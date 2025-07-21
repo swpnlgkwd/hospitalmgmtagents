@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="Scripts\DMLStatement.txt" />
+    <Content Include="docs\DMLStatement.txt" />
   </ItemGroup>
 
   <ItemGroup>
