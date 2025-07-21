@@ -56,45 +56,55 @@ namespace HospitalStaffMgmtApis.Agents.Services
         public async Task<MessageContent?> GetAgentResponseAsync(MessageRole role, string message)
         {
             var thread = CreateThread();
-            await AddUserMessageAsync(thread, role, message);
 
-            ThreadRun run = _client.Runs.CreateRun(thread.Id, _agent.Id);
-
-            do
+            try
             {
-               Thread.Sleep(500);
-                run = _client.Runs.GetRun(thread.Id, run.Id);
+                await AddUserMessageAsync(thread, role, message);
 
-                if (run.Status == RunStatus.RequiresAction &&
-                    run.RequiredAction is SubmitToolOutputsAction action)
+                ThreadRun run = _client.Runs.CreateRun(thread.Id, _agent.Id);
+
+                do
                 {
-                    var toolOutputs = new List<ToolOutput>();
+                    Thread.Sleep(500);
+                    run = _client.Runs.GetRun(thread.Id, run.Id);
 
-                    foreach (var toolCall in action.ToolCalls)
+                    if (run.Status == RunStatus.RequiresAction &&
+                        run.RequiredAction is SubmitToolOutputsAction action)
                     {
-                        var result = await GetResolvedToolOutput(toolCall);
-                        if (result != null)
-                            toolOutputs.Add(result);
+                        var toolOutputs = new List<ToolOutput>();
+
+                        foreach (var toolCall in action.ToolCalls)
+                        {
+                            var result = await GetResolvedToolOutput(toolCall);
+                            if (result != null)
+                                toolOutputs.Add(result);
+                        }
+
+                        run = _client.Runs.SubmitToolOutputsToRun(thread.Id, run.Id, toolOutputs);
                     }
 
-                    run = _client.Runs.SubmitToolOutputsToRun(thread.Id, run.Id, toolOutputs);
+                } while (run.Status == RunStatus.Queued || run.Status == RunStatus.InProgress || run.Status == RunStatus.RequiresAction);
+
+                var messages = _client.Messages.GetMessages(
+                    threadId: thread.Id,
+                    order: ListSortOrder.Descending
+                );
+
+                foreach (var msg in messages)
+                {
+                    var messageText = msg.ContentItems.OfType<MessageTextContent>().FirstOrDefault();
+                    _logger.LogInformation(messageText?.Text);
+                    return messageText;
                 }
 
-            } while (run.Status == RunStatus.Queued || run.Status == RunStatus.InProgress || run.Status == RunStatus.RequiresAction);
-
-            var messages = _client.Messages.GetMessages(
-                threadId: thread.Id,
-                order: ListSortOrder.Descending
-            );
-
-            foreach (var msg in messages)
-            {
-                var messageText = msg.ContentItems.OfType<MessageTextContent>().FirstOrDefault();
-                _logger.LogInformation(messageText?.Text);
-                return messageText;
+                return null;
             }
-
-            return null;
+            finally
+            {
+                // Clean up thread
+                await _client.Threads.DeleteThreadAsync(thread.Id);
+                _logger.LogInformation($"Thread {thread.Id} deleted.");
+            }
         }
 
         /// <summary>

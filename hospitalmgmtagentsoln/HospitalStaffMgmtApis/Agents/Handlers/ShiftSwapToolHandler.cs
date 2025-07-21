@@ -56,11 +56,11 @@ namespace HospitalStaffMgmtApis.Agents.Handlers
 
                 if (!result)
                 {
-                    _logger.LogInformation("ShiftSwapTool: Swap failed - {Reason}");
+                    _logger.LogInformation("ShiftSwapTool: Swap failed ");
                     return new ToolOutput(call.Id, JsonSerializer.Serialize(new
                     {
                         success = false,
-                        error = "ShiftSwapTool: Swap failed - {Reason}"
+                        error = "ShiftSwapTool: Swap failed "
                     }));
                 }
 

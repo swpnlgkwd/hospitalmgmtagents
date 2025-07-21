@@ -63,6 +63,10 @@ builder.Services.AddScoped<IToolHandler, ApplyForLeaveToolHandler>();
 builder.Services.AddScoped<IToolHandler, AutoReplaceShiftsForLeaveToolHandler>();
 builder.Services.AddScoped<IToolHandler, ResolveRelativeDateToolHandler>();
 builder.Services.AddScoped<IToolHandler, ShiftSwapToolHandler>();
+builder.Services.AddScoped<IToolHandler, DepartmentNameResolverToolHandler>();
+builder.Services.AddScoped<IToolHandler, FindAvailableStaffToolHandler>();
+
+
 
 // Register Agent infrastructure
 builder.Services.AddSingleton<IAgentStore, FileAgentStore>();

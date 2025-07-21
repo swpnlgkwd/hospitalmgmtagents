@@ -5,20 +5,50 @@ Working Prompt
 
  - GetShiftSchedulePrompt
 : Basic Queries By Staff
-  1. Show me the shift schedule of Asha Patil.
-  2. When is Rekha working next?
-  3. Who worked in ICU yesterday?
-  4. Give me schedule between 19th July 2025 and 21 July 2025 schedule for Rekha.
+
+1. Show ICU Morning shifts for this week
+
+2. Show ICU Evening shifts for this week
+
+3. Show ICU Night shifts for this week
+
+4. Who worked in OPD yesterday
+
+5. When is Asha working next?
+
+6. Show me the shift schedule of Asha Patil
+
+7. Give me schedule between 19th July 2025 and 21 July 2025 schedule for Sunita.
+
+8. Give me OPD schedule for next Monday.
+
+9. Show me the Pediatrics department's schedule for this week
+
+10. Show me the schedule for a staff member named  hello
+
+11. Show me the schedule for a staff member named  Asha from 21st July to 24th July
+
+Shift Swap Prompts 	
+- Swap Swapnil from the ICU night shift on 25th July with Asha from the morning shift on 24th July
+
+Leave Prompts
+- apply casual leave for Asha  on 25th July 2025
+
+FindAvailableStaffPrompt 
+- Who can work tomorrow's night shift?
+
+ - Who is free to work the night shift tomorrow?
+
+ - Find someone available for the ICU morning shift on 22nd July.
+
+ - We need a nurse for the icu department tonight — who’s not scheduled yet?
+
+ - I need someone to cover a duty in pediatrics this Friday night. Who’s free?
+
+ - Help me reassign a shift — who is eligible and free?
 
 
-	Shift Swap Prompts 
-	- Swap Amit from the night shift on 17th July 2025 with Kavita from evening shift on the same date
 
-	Prompt Flow :  Call StaffNameResolver Tool and ShiftSwapTool
-
-
-	Leave Prompts
-	 - Submit leave for Meena on 16th June 2024
 
 
 
@@ -33,25 +63,7 @@ Working Prompt
 "Give me last week's schedule for Ravi Iyer."
 (Date range + staff filter)
 
-🔹 Department-Based Queries
-"Who worked in ICU yesterday?"
-(Department = ICU, Date = Yesterday)
 
-"Give me OPD schedule for next Monday."
-(Department = OPD, Date = upcoming Monday)
-
-"Show me the Pediatrics department's schedule for this week."
-(Department = Pediatrics, date range = this week)
-
-🔹 Role-Specific Queries
-"When is the next night shift for a nurse in ICU?"
-(Role = Nurse, ShiftType = Night, Department = ICU)
-
-"Which doctors are scheduled for the evening shift tomorrow?"
-(Role = Doctor, ShiftType = Evening, Date = Tomorrow)
-
-"Get me all technician shifts for the weekend."
-(Role = Technician, date range = Saturday–Sunday)
 
 🔹 Shift Type Filtering
 "Show all morning shift assignments for July 20th."

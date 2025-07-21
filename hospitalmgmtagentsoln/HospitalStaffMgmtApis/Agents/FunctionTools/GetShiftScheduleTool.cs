@@ -9,9 +9,11 @@ namespace HospitalStaffMgmtApis.Agents.FunctionTools
         {
             return new FunctionToolDefinition(
                 name: "getShiftSchedule",
-                description: "Fetches the shift schedule for a specific staff member or department, filtered by optional date range. "
-                           + "If staffId is provided, returns only their assigned shifts. If departmentId is provided, shows schedule for that department. "
-                           + "Supports optional date filters for FromDate and ToDate.",
+                description: "Fetches the shift schedule for a specific staff member or department, optionally filtered by date range and shift type. "
+                           + "If 'staffId' is provided, returns only that staff member's assigned shifts. "
+                           + "If 'departmentId' is provided, shows the schedule for that department. "
+                           + "If 'shiftType' is provided, filters the results to that specific shift type (e.g., Morning, Evening, Night). "
+                           + "Supports optional 'fromDate' and 'toDate' for custom date range filtering.",
                 parameters: BinaryData.FromObjectAsJson(
                     new
                     {
@@ -39,7 +41,13 @@ namespace HospitalStaffMgmtApis.Agents.FunctionTools
                                 type = "string",
                                 format = "date",
                                 description = "Optional. End date for the shift schedule in YYYY-MM-DD format."
+                            },
+                            shiftType = new
+                            {
+                                type = "string",
+                                description = "Optional. The name of the shift type to filter by, such as 'Morning', 'Evening', or 'Night'."
                             }
+
                         }
                         // All fields optional, so no "required" array needed
                     },
@@ -49,3 +57,5 @@ namespace HospitalStaffMgmtApis.Agents.FunctionTools
         }
     }
 }
+
+//"shiftType": { "type": "string", "description": "Shift type such as Morning, Evening, or Night" },
