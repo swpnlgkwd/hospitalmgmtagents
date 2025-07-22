@@ -1,6 +1,7 @@
 ﻿using HospitalStaffMgmtApis.Data.Model;
 using HospitalStaffMgmtApis.Data.Model.HospitalStaffMgmtApis.Models.Requests.HospitalStaffMgmtApis.Models.Requests;
 using HospitalStaffMgmtApis.Data.Models;
+using HospitalStaffMgmtApis.Models;
 using HospitalStaffMgmtApis.Models.Requests;
 
 namespace HospitalStaffMgmtApis.Data.Repository.Interfaces
@@ -91,9 +92,22 @@ namespace HospitalStaffMgmtApis.Data.Repository.Interfaces
         Task<List<LeaveRequest>> GetPendingLeaveRequestsAsync();
 
         /// <summary>
+        /// Retrieves all leave requests that are still pending approval.
+        /// </summary>
+        /// <returns>List of pending leave requests for review.</returns>
+        Task<List<PendingLeaveResponse>> FetchPendingLeaveRequestsAsync(PendingLeaveRequest pendingLeaveRequest);
+
+        /// <summary>
         /// Retrieves all uncovered shifts (shifts that are not assigned to any staff).
         /// </summary>
         /// <returns>List of unassigned or uncovered planned shifts.</returns>
         Task<List<PlannedShift>> GetUncoveredShiftsAsync(GetUncoveredShiftsRequest request);
+
+
+        /// <summary>
+        /// Retrieves all fatique shifts (shifts that are not assigned to any staff).
+        /// </summary>
+        /// <returns>List of planned shifts.</returns>
+        Task<List<PlannedShift>> GetFatiguedStaffAsync();
     }
 }

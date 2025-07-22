@@ -65,7 +65,7 @@ builder.Services.AddScoped<IToolHandler, ShiftSwapToolHandler>();
 builder.Services.AddScoped<IToolHandler, DepartmentNameResolverToolHandler>();
 builder.Services.AddScoped<IToolHandler, FindAvailableStaffToolHandler>();
 builder.Services.AddScoped<IToolHandler, UncoverShiftToolHandler>();
-
+builder.Services.AddScoped<IToolHandler, ViewPendingLeaveRequestToolHandler>();
 
 
 // Register Agent infrastructure

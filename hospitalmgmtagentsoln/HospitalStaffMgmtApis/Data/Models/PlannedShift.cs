@@ -25,4 +25,10 @@ namespace HospitalStaffMgmtApis.Data.Models
         [JsonPropertyName("assignedStaffId")]
         public int? AssignedStaffId { get; set; }
     }
+
+    public class PlannedShiftWithStaffName :PlannedShift
+    {
+        [JsonPropertyName("staffName")]
+        public string StaffName { get; set; } = string.Empty;
+    }
 }

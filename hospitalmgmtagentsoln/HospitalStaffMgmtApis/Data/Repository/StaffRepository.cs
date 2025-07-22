@@ -3,8 +3,10 @@ using HospitalStaffMgmtApis.Data.Model;
 using HospitalStaffMgmtApis.Data.Model.HospitalStaffMgmtApis.Models.Requests.HospitalStaffMgmtApis.Models.Requests;
 using HospitalStaffMgmtApis.Data.Models;
 using HospitalStaffMgmtApis.Data.Repository.Interfaces;
+using HospitalStaffMgmtApis.Models;
 using HospitalStaffMgmtApis.Models.Requests;
 using Microsoft.Recognizers.Text.DateTime;
+using System.Data;
 using System.Data.SqlClient;
 using System.Text.Json.Serialization;
 
@@ -717,6 +719,155 @@ namespace HospitalStaffMgmtApis.Data.Repository
 
             return pendingRequests;
         }
+
+        /// <summary>
+        /// Retrieves all leave requests that are pending approval.
+        /// </summary>
+        /// <returns>List of pending leave requests.</returns>
+        /// <summary>
+        /// Fetches all pending leave requests, optionally filtered by date range, staff name, or department name.
+        /// </summary>
+        /// <param name="pendingLeaveRequest">Filter criteria for retrieving pending requests.</param>
+        /// <returns>List of matching leave requests.</returns>
+        public async Task<List<PendingLeaveResponse>> FetchPendingLeaveRequestsAsync(PendingLeaveRequest pendingLeaveRequest)
+        {
+            var pendingRequests = new List<PendingLeaveResponse>();
+
+            using var conn = new SqlConnection(sqlConnectionString);
+            await conn.OpenAsync();
+
+            var query = @"
+        SELECT 
+            s.name AS staff_name,
+            d.name AS department_name,
+            lr.leave_start,
+            lr.leave_end
+        FROM LeaveRequests lr
+        INNER JOIN Staff s ON lr.staff_id = s.staff_id
+        INNER JOIN Department d ON s.department_id = d.department_id
+        WHERE lr.status = 'Pending'";
+
+            var filters = new List<string>();
+            var cmd = new SqlCommand();
+            cmd.Connection = conn;
+
+            if (!string.IsNullOrEmpty(pendingLeaveRequest.FromDate))
+            {
+                filters.Add("lr.leave_start >= @fromDate");
+                cmd.Parameters.AddWithValue("@fromDate", DateTime.Parse(pendingLeaveRequest.FromDate));
+            }
+
+            if (!string.IsNullOrEmpty(pendingLeaveRequest.ToDate))
+            {
+                filters.Add("lr.leave_end <= @toDate");
+                cmd.Parameters.AddWithValue("@toDate", DateTime.Parse(pendingLeaveRequest.ToDate));
+            }
+
+            if (!string.IsNullOrEmpty(pendingLeaveRequest.StaffName))
+            {
+                filters.Add("s.name LIKE @staffName");
+                cmd.Parameters.AddWithValue("@staffName", $"%{pendingLeaveRequest.StaffName}%");
+            }
+
+            if (!string.IsNullOrEmpty(pendingLeaveRequest.DepartmentName))
+            {
+                filters.Add("d.name LIKE @departmentName");
+                cmd.Parameters.AddWithValue("@departmentName", $"%{pendingLeaveRequest.DepartmentName}%");
+            }
+
+            if (filters.Count > 0)
+            {
+                query += " AND " + string.Join(" AND ", filters);
+            }
+
+            cmd.CommandText = query;
+
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                pendingRequests.Add(new PendingLeaveResponse
+                {
+                    StaffName = reader.GetString(reader.GetOrdinal("staff_name")),
+                    DepartmentName = reader.GetString(reader.GetOrdinal("department_name")),
+                    LeaveStartDate = reader.GetDateTime(reader.GetOrdinal("leave_start")),
+                    LeaveEndDate = reader.GetDateTime(reader.GetOrdinal("leave_end"))
+                });
+            }
+
+            return pendingRequests;
+        }
+
+
+
+        /// <summary>
+        /// Retrieves all leave requests that are pending approval.
+        /// </summary>
+        /// <returns>List of pending leave requests.</returns>
+        public async Task<List<PlannedShift>> GetFatiguedStaffAsync()
+        {
+            var plannedShifts = new List<PlannedShift>();
+
+            using var conn = new SqlConnection(sqlConnectionString);
+            await conn.OpenAsync();
+
+            var query = @"
+WITH NightShifts AS (
+    SELECT 
+        ps.planned_shift_id,
+        ps.assigned_staff_id,
+        ps.shift_date,
+        ps.department_id,
+        ps.shift_type_id,
+        ps.slot_number,
+        ps.shift_status_id,
+        d.name AS department_name,
+        st.name AS shift_type_name
+    
+    FROM PlannedShift ps
+    INNER JOIN ShiftType st ON ps.shift_type_id = st.shift_type_id
+    INNER JOIN Department d ON ps.department_id = d.department_id
+    INNER JOIN Staff s ON ps.assigned_staff_id = s.staff_id
+    WHERE st.name = 'Night' AND ps.assigned_staff_id IS NOT NULL
+),
+ConsecutiveNights AS (
+    SELECT 
+        n1.*
+    FROM NightShifts n1
+    JOIN NightShifts n2 
+      ON n1.assigned_staff_id = n2.assigned_staff_id
+     AND DATEDIFF(DAY, n1.shift_date, n2.shift_date) = 1
+)
+SELECT     planned_shift_id,
+assigned_staff_id,
+shift_date,
+department_id,
+shift_type_id,
+slot_number,
+shift_status_id,
+department_name,
+
+shift_type_name FROM ConsecutiveNights
+";
+
+            using var cmd = new SqlCommand(query, conn);
+            using var reader = await cmd.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                plannedShifts.Add(new PlannedShift
+                {
+                    PlannedShiftId = reader.GetInt32(reader.GetOrdinal("planned_shift_id")),
+                    AssignedStaffId = reader.GetInt32(reader.GetOrdinal("assigned_staff_id")),
+                    ShiftDate = reader.GetDateTime(reader.GetOrdinal("shift_date")),
+                    DepartmentName =  reader.GetString("department_name"),
+                    ShiftTypeName = reader.GetString("shift_type_name") ,                  
+             
+                });
+            }
+
+            return plannedShifts;
+        }
+
 
 
         public async Task<List<PlannedShift>> GetUncoveredShiftsAsync(GetUncoveredShiftsRequest request)

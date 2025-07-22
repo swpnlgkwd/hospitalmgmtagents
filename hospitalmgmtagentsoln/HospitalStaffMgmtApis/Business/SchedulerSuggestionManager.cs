@@ -38,7 +38,8 @@ namespace HospitalStaffMgmtApis.Business
             {
                 suggestions.Add(new SmartSuggestion
                 {
-                    Message = $"You have {uncoveredShifts.Count} uncovered shifts this week.",
+                    //Message = $"You have {uncoveredShifts.Count} uncovered shifts this week.",
+                    Message = $"📅 {uncoveredShifts.Count} shifts this week are still unassigned",
                     ActionPayload = "show uncovered shifts this week",
                     Type = "UncoveredShift"
                 });
@@ -50,23 +51,25 @@ namespace HospitalStaffMgmtApis.Business
             {
                 suggestions.Add(new SmartSuggestion
                 {
-                    Message = $"You have {pendingLeaves.Count} pending leave requests.",
-                    ActionPayload = "review pending leave requests",
+                    //Message = $"You have {pendingLeaves.Count} pending leave requests.",
+                    Message = $"📤 {pendingLeaves.Count} leave requests are pending your approval",
+                    ActionPayload = "Show me all pending leave requests",
                     Type = "PendingLeave"
                 });
             }
 
-            //// Suggestion: Fatigued staff with back-to-back night shifts
-            //var fatiguedStaff = await staffRepository.GetFatiguedStaffAsync();
-            //if (fatiguedStaff.Count > 0)
-            //{
-            //    suggestions.Add(new SmartSuggestion
-            //    {
-            //        Message = $"You have {fatiguedStaff.Count} staff with back-to-back night shifts.",
-            //        ActionPayload = "rebalance night shifts",
-            //        Type = "FatigueWarning"
-            //    });
-            //}
+            // Suggestion: Fatigued staff with back-to-back night shifts
+            var fatiguedStaff = await staffRepository.GetFatiguedStaffAsync();
+            if (fatiguedStaff.Count > 0)
+            {
+                suggestions.Add(new SmartSuggestion
+                {
+                   // Message = $"You have {fatiguedStaff.Count} staff with back-to-back night shifts.",
+                    Message = $"😴 {fatiguedStaff.Count} staff are working back-to-back night shifts",
+                    ActionPayload = $"Show me employee working back to back night shifts",
+                    Type = "FatigueWarning"
+                });
+            }
 
             return suggestions;
         }

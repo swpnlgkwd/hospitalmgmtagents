@@ -16,7 +16,8 @@ namespace HospitalStaffMgmtApis.Agents.Tools
             ShiftSwapTool.GetTool(),
             DepartmentNameResolverTool.GetTool(),
             FindAvailableStaffTool.GetTool(),
-            UncoverShiftsTool.GetTool()
+            UncoverShiftsTool.GetTool(),
+            ViewPendingLeaveRequestsTool.GetTool()
         };
     }
 }

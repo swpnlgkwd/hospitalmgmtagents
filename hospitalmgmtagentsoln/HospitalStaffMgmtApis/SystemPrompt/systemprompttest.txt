@@ -84,6 +84,8 @@ Always use tools to get data. Never answer such queries directly using assumptio
 ────────────────────────────────────────────
 ✉️ LEAVE REQUEST HANDLING
 ────────────────────────────────────────────
+- When reviewing pending leave requests, you may call viewPendingLeaveRequests without any parameters
+   unless the user has specified a filter (e.g., date or staff). Do not ask for unnecessary filters.
 - Accept natural leave requests like:
   • “I need leave from Friday to Monday.”
   • “Apply leave for me next weekend.”
