@@ -80,34 +80,34 @@ export class ShiftCalendarComponent implements OnInit {
     alert('Shift: ' + arg.event.title);
   }
 
-transformShiftsToEvents(shifts: any[]): any[] {
-  return shifts.map(shift => {
-    const isVacant = shift.staffName === 'Vacant';
+  transformShiftsToEvents(shifts: any[]): any[] {
+    return shifts.map(shift => {
+      const isVacant = shift.staffName === 'Vacant';
 
-    return {
-      title: isVacant
-        ? `🟡 Vacant (${shift.shiftType})`
-        : `${shift.staffName} (${shift.shiftType})`,
-      start: shift.shiftDate,
-      end: shift.shiftDate, // Optional: calculate based on shift type duration
-      allDay: true,
-      extendedProps: {
-        staffName: shift.staffName,
-        departmentName: shift.departmentName,
-        shiftType: shift.shiftType,
-        role: shift.role,
-        isVacant: isVacant
-      },
-      backgroundColor: isVacant
-        ? '#fff3cd' // light yellow
-        : this.getShiftColor(shift.shiftType),
-      borderColor: isVacant
-        ? '#ffc107' // yellow border
-        : this.getBorderColor(shift.shiftType),
-      textColor: isVacant ? '#856404' : undefined
-    };
-  });
-}
+      return {
+        title: isVacant
+          ? `🟡 Vacant (${shift.shiftType})`
+          : `${shift.staffName} (${shift.shiftType})`,
+        start: shift.shiftDate,
+        end: shift.shiftDate, // Optional: calculate based on shift type duration
+        allDay: true,
+        extendedProps: {
+          staffName: shift.staffName,
+          departmentName: shift.departmentName,
+          shiftType: shift.shiftType,
+          role: shift.role,
+          isVacant: isVacant
+        },
+        backgroundColor: isVacant
+          ? '#fff3cd' // light yellow
+          : this.getShiftColor(shift.shiftType),
+        borderColor: isVacant
+          ? '#ffc107' // yellow border
+          : this.getBorderColor(shift.shiftType),
+        textColor: isVacant ? '#856404' : undefined
+      };
+    });
+  }
 
 
   getShiftColor(shiftType: string): string {

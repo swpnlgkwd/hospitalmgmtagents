@@ -95,7 +95,7 @@ namespace HospitalStaffMgmtApis.Data.Repository.Interfaces
         /// Retrieves all leave requests that are still pending approval.
         /// </summary>
         /// <returns>List of pending leave requests for review.</returns>
-        Task<List<PendingLeaveResponse>> FetchPendingLeaveRequestsAsync(PendingLeaveRequest pendingLeaveRequest);
+        Task<List<PendingLeaveResponse>> FetchPendingLeaveRequestsAsync(PendingLeaveRequest? pendingLeaveRequest);
 
         /// <summary>
         /// Retrieves all uncovered shifts (shifts that are not assigned to any staff).

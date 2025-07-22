@@ -1,11 +1,8 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace HospitalStaffMgmtApis.Data.Models
+namespace HospitalStaffMgmtApis.Data.Models.StaffLeaveRequest
 {
-    /// <summary>
-    /// Represents a leave request submitted by a staff member.
-    /// </summary>
-    public class LeaveRequest
+    public class LeaveRequestInfo
     {
         [JsonPropertyName("leaveRequestId")]
         public int LeaveRequestId { get; set; }
@@ -20,8 +17,7 @@ namespace HospitalStaffMgmtApis.Data.Models
         public DateTime LeaveEnd { get; set; }
 
         [JsonPropertyName("status")]
-        public string Status { get; set; } = string.Empty; // e.g. Pending, Approved, Rejected
-   
-    
+        public string Status { get; set; } = "Pending"; // e.g. Pending, Approved, Rejected
+
     }
 }

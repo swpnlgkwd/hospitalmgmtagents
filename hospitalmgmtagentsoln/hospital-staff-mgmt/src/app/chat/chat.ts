@@ -44,6 +44,18 @@ export class Chat implements OnInit {
   });
 }
 
+handleActionClick(s: SmartSuggestion): void {
+  // const actionMessage = {
+  //   type: s.type,
+  //   actionName: s.actionName,
+  //   data: s.actionData || {}
+  // };
+
+  // const messagePayload = `ACTION::${JSON.stringify(actionMessage)}`;
+
+  this.sendMessage(s.actionText); // This should route to your chat API
+}
+
 
 
  loadSmartSuggestions(): void {
