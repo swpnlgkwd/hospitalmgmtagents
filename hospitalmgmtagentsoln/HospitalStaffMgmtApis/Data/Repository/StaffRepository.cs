@@ -1,7 +1,9 @@
 ﻿using Azure.Core;
 using HospitalStaffMgmtApis.Data.Model;
 using HospitalStaffMgmtApis.Data.Model.HospitalStaffMgmtApis.Models.Requests.HospitalStaffMgmtApis.Models.Requests;
+using HospitalStaffMgmtApis.Data.Models;
 using HospitalStaffMgmtApis.Data.Repository.Interfaces;
+using HospitalStaffMgmtApis.Models.Requests;
 using Microsoft.Recognizers.Text.DateTime;
 using System.Data.SqlClient;
 using System.Text.Json.Serialization;
@@ -414,17 +416,20 @@ namespace HospitalStaffMgmtApis.Data.Repository
 
             var cmd = conn.CreateCommand();
             cmd.CommandText = @"
-        SELECT 
+		SELECT 
             sa.shift_date,
             st.name AS shift_type,
             d.name AS department_name,
-            s.name AS staff_name,
+                CASE 
+                WHEN sa.assigned_staff_id IS NULL THEN 'Vacant'
+                ELSE s.name
+                END AS staff_name,
             r.role_name AS role
         FROM PlannedShift sa
-        INNER JOIN Staff s ON sa.assigned_staff_id = s.staff_id
         INNER JOIN ShiftType st ON sa.shift_type_id = st.shift_type_id
-        INNER JOIN Department d ON s.department_id = d.department_id
-        INNER JOIN Role r ON s.role_id = r.role_id
+        INNER JOIN Department d ON sa.department_id = d.department_id
+        left outer JOIN Staff s ON sa.assigned_staff_id = s.staff_id
+        LEFT OUTER JOIN Role r ON s.role_id = r.role_id
         WHERE 
             sa.shift_date >= @startDate AND sa.shift_date <= @endDate
         ORDER BY sa.shift_date ASC, st.start_time ASC";
@@ -441,7 +446,9 @@ namespace HospitalStaffMgmtApis.Data.Repository
                     ShiftType = reader.GetString(reader.GetOrdinal("shift_type")),
                     DepartmentName = reader.GetString(reader.GetOrdinal("department_name")),
                     StaffName = reader.GetString(reader.GetOrdinal("staff_name")),
-                    Role = reader.GetString(reader.GetOrdinal("role"))
+                    Role = reader.IsDBNull(reader.GetOrdinal("role"))
+                        ? "Unassigned"
+                        : reader.GetString(reader.GetOrdinal("role"))
                 });
             }
 
@@ -623,6 +630,160 @@ namespace HospitalStaffMgmtApis.Data.Repository
             }
         }
 
+
+        /// <summary>
+        /// Retrieves all upcoming shifts that have no staff assigned.
+        /// </summary>
+        /// <returns>List of uncovered shifts.</returns>
+        /// <summary>
+        /// Retrieves all upcoming shifts that have no staff assigned.
+        /// </summary>
+        /// <returns>List of uncovered shifts with shift type and department names.</returns>
+        public async Task<List<PlannedShift>> GetUncoveredShiftsAsync()
+        {
+            var uncoveredShifts = new List<PlannedShift>();
+
+            using var conn = new SqlConnection(sqlConnectionString);
+            await conn.OpenAsync();
+
+            var query = @"
+        SELECT 
+            ps.planned_shift_id,
+            ps.shift_date,
+            st.name AS shift_type_name,
+            d.name AS department_name,
+            ps.slot_number,
+            ps.shift_status_id,
+            ps.assigned_staff_id
+        FROM PlannedShift ps
+        JOIN ShiftType st ON ps.shift_type_id = st.shift_type_id
+        JOIN Department d ON ps.department_id = d.department_id
+        WHERE ps.assigned_staff_id IS NULL
+        AND ps.shift_date >= CAST(GETDATE() AS DATE)";
+
+            using var cmd = new SqlCommand(query, conn);
+            using var reader = await cmd.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                uncoveredShifts.Add(new PlannedShift
+                {
+                    PlannedShiftId = reader.GetInt32(reader.GetOrdinal("planned_shift_id")),
+                    ShiftDate = reader.GetDateTime(reader.GetOrdinal("shift_date")),
+                    ShiftTypeName = reader.GetString(reader.GetOrdinal("shift_type_name")),
+                    DepartmentName = reader.GetString(reader.GetOrdinal("department_name")),
+                    SlotNumber = reader.GetInt32(reader.GetOrdinal("slot_number")),
+                    ShiftStatusId = reader.GetInt32(reader.GetOrdinal("shift_status_id")),
+                    AssignedStaffId = reader.IsDBNull(reader.GetOrdinal("assigned_staff_id"))
+                        ? null
+                        : reader.GetInt32(reader.GetOrdinal("assigned_staff_id"))
+                });
+            }
+
+            return uncoveredShifts;
+        }
+
+
+        /// <summary>
+        /// Retrieves all leave requests that are pending approval.
+        /// </summary>
+        /// <returns>List of pending leave requests.</returns>
+        public async Task<List<LeaveRequest>> GetPendingLeaveRequestsAsync()
+        {
+            var pendingRequests = new List<LeaveRequest>();
+
+            using var conn = new SqlConnection(sqlConnectionString);
+            await conn.OpenAsync();
+
+            var query = @"
+        SELECT *
+        FROM LeaveRequests
+        WHERE status = 'Pending'";
+
+            using var cmd = new SqlCommand(query, conn);
+            using var reader = await cmd.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                pendingRequests.Add(new LeaveRequest
+                {
+                    LeaveRequestId = reader.GetInt32(reader.GetOrdinal("id")), // ← fixed here
+                    StaffId = reader.GetInt32(reader.GetOrdinal("staff_id")),
+                    LeaveStart = reader.GetDateTime(reader.GetOrdinal("leave_start")),
+                    LeaveEnd = reader.GetDateTime(reader.GetOrdinal("leave_end")),
+                    Status = reader.GetString(reader.GetOrdinal("status"))
+                });
+            }
+
+            return pendingRequests;
+        }
+
+
+        public async Task<List<PlannedShift>> GetUncoveredShiftsAsync(GetUncoveredShiftsRequest request)
+        {
+            var uncoveredShifts = new List<PlannedShift>();
+
+            using var conn = new SqlConnection(sqlConnectionString);
+            await conn.OpenAsync();
+
+            var query = @"
+        SELECT 
+            ps.planned_shift_id,
+            ps.shift_date,
+            st.name AS shift_type_name,
+            d.name AS department_name,
+            ps.slot_number,
+            ps.shift_status_id,
+            ps.assigned_staff_id
+        FROM PlannedShift ps
+        JOIN ShiftType st ON ps.shift_type_id = st.shift_type_id
+        JOIN Department d ON ps.department_id = d.department_id
+        LEFT JOIN Staff s ON ps.assigned_staff_id = s.staff_id
+        WHERE ps.assigned_staff_id IS NULL
+          AND ps.shift_date >= @fromDate";
+
+            if (request.ToDate.HasValue)
+                query += " AND ps.shift_date <= @toDate";
+            if (request.DepartmentId.HasValue)
+                query += " AND ps.department_id = @departmentId";
+            if (!string.IsNullOrEmpty(request.Role))
+                query += " AND s.role = @role";
+            if (!string.IsNullOrEmpty(request.ShiftType))
+                query += " AND st.name = @shiftType";
+
+            using var cmd = new SqlCommand(query, conn);
+
+            cmd.Parameters.AddWithValue("@fromDate", request.FromDate.Date);
+
+            if (request.ToDate.HasValue)
+                cmd.Parameters.AddWithValue("@toDate", request.ToDate.Value.Date);
+            if (request.DepartmentId.HasValue)
+                cmd.Parameters.AddWithValue("@departmentId", request.DepartmentId.Value);
+            if (!string.IsNullOrEmpty(request.Role))
+                cmd.Parameters.AddWithValue("@role", request.Role);
+            if (!string.IsNullOrEmpty(request.ShiftType))
+                cmd.Parameters.AddWithValue("@shiftType", request.ShiftType);
+
+            using var reader = await cmd.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                uncoveredShifts.Add(new PlannedShift
+                {
+                    PlannedShiftId = reader.GetInt32(reader.GetOrdinal("planned_shift_id")),
+                    ShiftDate = reader.GetDateTime(reader.GetOrdinal("shift_date")),
+                    ShiftTypeName = reader.GetString(reader.GetOrdinal("shift_type_name")),
+                    DepartmentName = reader.GetString(reader.GetOrdinal("department_name")),
+                    SlotNumber = reader.GetInt32(reader.GetOrdinal("slot_number")),
+                    ShiftStatusId = reader.GetInt32(reader.GetOrdinal("shift_status_id")),
+                    AssignedStaffId = reader.IsDBNull(reader.GetOrdinal("assigned_staff_id"))
+                        ? null
+                        : reader.GetInt32(reader.GetOrdinal("assigned_staff_id"))
+                });
+            }
+
+            return uncoveredShifts;
+        }
 
 
         #region Helpers

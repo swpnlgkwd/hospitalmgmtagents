@@ -39,6 +39,26 @@
             </span>
         </div>
     </div>
+    <!-- 👇 Smart Suggestions go just above the chat message window -->
+    <!-- <div class="suggestion-chip-row" *ngIf="suggestions.length > 0">
+        <p class="chip-header">💡 Smart Suggestions:</p>
+        <div class="chip-container">
+            <div class="suggestion-chip" *ngFor="let s of suggestions; let i = index">
+                <span class="chip-text" (click)="handleSuggestionClick(s)">{{ s.message }}</span>
+                <span class="chip-close" (click)="removeSuggestion(i)">&times;</span>
+            </div>
+        </div>
+    </div> -->
+    <div class="suggestion-container">
+        <div *ngFor="let s of suggestions; let i = index" class="suggestion-chip">
+            <span (click)="handleSuggestionClick(s)">
+                {{ s.message }}
+            </span>
+            <span class="suggestion-chip-close" (click)="removeSuggestion(i)">×</span>
+        </div>
+    </div>
+
+
 
     <!-- Chat Input -->
     <div class="chat-input">

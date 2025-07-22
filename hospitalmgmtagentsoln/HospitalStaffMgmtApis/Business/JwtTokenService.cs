@@ -6,7 +6,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-namespace HospitalShiftScheduler.Services.Auth
+namespace HospitalStaffMgmtApis.Business
 {
     /// <summary>
     /// Service responsible for generating JWT tokens for authenticated staff members.

@@ -13,42 +13,40 @@ import { ShiftScheduleService } from '../services/shift-schedule.service';
   templateUrl: './shift-calendar.component.html',
   styleUrl: './shift-calendar.component.css'
 })
-export class ShiftCalendarComponent  implements OnInit {
+export class ShiftCalendarComponent implements OnInit {
 
-  constructor(private scheduleService: ShiftScheduleService) {}
+  constructor(private scheduleService: ShiftScheduleService) { }
 
-
-  
   calendarOptions: CalendarOptions = {
-  plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
-  initialView: 'dayGridMonth',
-  aspectRatio: 1.4, // Optional: makes cells taller
-  headerToolbar: {
-    left: 'prev,next today',
-    center: 'title',
-    right: 'dayGridMonth,timeGridWeek,listWeek'
-  },
-  events: [], // Initially empty
-  dateClick: this.handleDateClick.bind(this),
-  eventClick: this.handleEventClick.bind(this),
+    plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
+    initialView: 'dayGridMonth',
+    aspectRatio: 1.4, // Optional: makes cells taller
+    headerToolbar: {
+      left: 'prev,next today',
+      center: 'title',
+      right: 'dayGridMonth,timeGridWeek,listWeek'
+    },
+    events: [], // Initially empty
+    dateClick: this.handleDateClick.bind(this),
+    eventClick: this.handleEventClick.bind(this),
 
-  // 👉 Add this here
-  eventDidMount: (info) => {
-    const { staffName, departmentName, shiftType } = info.event.extendedProps;
+    // 👉 Add this here
+    eventDidMount: (info) => {
+      const { staffName, departmentName, shiftType } = info.event.extendedProps;
 
-    const content = `
+      const content = `
       <div class="shift-title">
         <div class="staff-name">${staffName}</div>
         <div class="details">(${departmentName} - ${shiftType})</div>
       </div>
     `;
 
-    const titleEl = info.el.querySelector('.fc-event-title');
-    if (titleEl) {
-      titleEl.innerHTML = content;
+      const titleEl = info.el.querySelector('.fc-event-title');
+      if (titleEl) {
+        titleEl.innerHTML = content;
+      }
     }
-  }
-};
+  };
 
 
 
@@ -82,22 +80,35 @@ export class ShiftCalendarComponent  implements OnInit {
     alert('Shift: ' + arg.event.title);
   }
 
-  transformShiftsToEvents(shifts: any[]): any[] {
-    return shifts.map(shift => ({
-      title: '',
+transformShiftsToEvents(shifts: any[]): any[] {
+  return shifts.map(shift => {
+    const isVacant = shift.staffName === 'Vacant';
+
+    return {
+      title: isVacant
+        ? `🟡 Vacant (${shift.shiftType})`
+        : `${shift.staffName} (${shift.shiftType})`,
       start: shift.shiftDate,
-      end: shift.shiftDate, // You can calculate end time if needed
-      allDay: true, 
+      end: shift.shiftDate, // Optional: calculate based on shift type duration
+      allDay: true,
       extendedProps: {
         staffName: shift.staffName,
         departmentName: shift.departmentName,
         shiftType: shift.shiftType,
-        role: shift.role
+        role: shift.role,
+        isVacant: isVacant
       },
-      backgroundColor: this.getShiftColor(shift.shiftType),
-      borderColor: this.getBorderColor(shift.shiftType)
-    }));
-  }
+      backgroundColor: isVacant
+        ? '#fff3cd' // light yellow
+        : this.getShiftColor(shift.shiftType),
+      borderColor: isVacant
+        ? '#ffc107' // yellow border
+        : this.getBorderColor(shift.shiftType),
+      textColor: isVacant ? '#856404' : undefined
+    };
+  });
+}
+
 
   getShiftColor(shiftType: string): string {
     switch (shiftType.toLowerCase()) {

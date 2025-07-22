@@ -99,7 +99,7 @@ namespace HospitalStaffMgmtApis.Agents
             }
 
             // Not found — create new agent
-            string systemPromptPath = Path.Combine("SystemPrompt", "systemprompt.txt");
+            string systemPromptPath = Path.Combine("SystemPrompt", "systemprompttest.txt");
 
             if (!File.Exists(systemPromptPath))
                 throw new FileNotFoundException($"System prompt file not found at: {systemPromptPath}");

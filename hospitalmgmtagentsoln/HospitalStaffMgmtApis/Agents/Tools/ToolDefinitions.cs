@@ -1,5 +1,6 @@
 ﻿using Azure.AI.Agents.Persistent;
-using HospitalStaffMgmtApis.Agents.FunctionTools.HospitalStaffMgmtApis.Agents.FunctionTools.HospitalStaffMgmtApis.Agents.FunctionTools.HospitalStaffMgmtApis.Agents.FunctionTools;
+using HospitalStaffMgmtApis.Agents.FunctionTools;
+using HospitalStaffMgmtApis.Agents.Tools.HospitalStaffMgmtApis.Agents.Tools;
 
 namespace HospitalStaffMgmtApis.Agents.Tools
 {
@@ -14,7 +15,8 @@ namespace HospitalStaffMgmtApis.Agents.Tools
             ResolveRelativeDateTool.GetTool(),
             ShiftSwapTool.GetTool(),
             DepartmentNameResolverTool.GetTool(),
-            FindAvailableStaffTool.GetTool()
+            FindAvailableStaffTool.GetTool(),
+            UncoverShiftsTool.GetTool()
         };
     }
 }

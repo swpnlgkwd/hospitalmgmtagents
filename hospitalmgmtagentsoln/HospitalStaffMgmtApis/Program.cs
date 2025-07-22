@@ -10,7 +10,7 @@ using HospitalStaffMgmtApis.Business.Interfaces;
 using HospitalStaffMgmtApis.Data.Repository;
 using HospitalStaffMgmtApis.Data.Repository.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Extensions.DependencyInjection;
+
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -64,6 +64,7 @@ builder.Services.AddScoped<IToolHandler, ResolveRelativeDateToolHandler>();
 builder.Services.AddScoped<IToolHandler, ShiftSwapToolHandler>();
 builder.Services.AddScoped<IToolHandler, DepartmentNameResolverToolHandler>();
 builder.Services.AddScoped<IToolHandler, FindAvailableStaffToolHandler>();
+builder.Services.AddScoped<IToolHandler, UncoverShiftToolHandler>();
 
 
 
@@ -74,6 +75,7 @@ builder.Services.AddSingleton<IScheduleManager, ScheduleManager>();
 
 builder.Services.AddScoped<IAuthManager, AuthManager>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+builder.Services.AddScoped<ISchedulerSuggestionService, SchedulerSuggestionService>();
 
 
 var key = builder.Configuration["Jwt:Key"];

@@ -3,8 +3,8 @@ using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Linq;
 using System.Threading.Tasks;
-using HospitalStaffMgmtApis.Agents.Tools;
 using HospitalStaffMgmtApis.Data.Repository.Interfaces;
+using HospitalStaffMgmtApis.Agents.Tools;
 
 namespace HospitalStaffMgmtApis.Agents.Handlers
 {
