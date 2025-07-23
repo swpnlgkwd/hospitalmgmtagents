@@ -10,24 +10,21 @@ namespace HospitalStaffMgmtApis.Agents.Services
     /// Service responsible for handling interactions with the Persistent Agent,
     /// including sending messages, receiving responses, and resolving tool calls.
     /// </summary>
-    public class AgentService
+    public class AgentService : IAgentService
     {
         private readonly PersistentAgentsClient _client;
         private readonly PersistentAgent _agent;
-        private readonly IStaffRepository _staffRepository;
         private readonly ILogger<AgentService> _logger;
         private readonly IEnumerable<IToolHandler> _toolHandlers;
 
         public AgentService(
             PersistentAgentsClient persistentAgentsClient,
             PersistentAgent agent,
-            IStaffRepository staffRepository,
             IEnumerable<IToolHandler> toolHandlers,
             ILogger<AgentService> logger)
         {
             _client = persistentAgentsClient;
             _agent = agent;
-            _staffRepository = staffRepository;
             _toolHandlers = toolHandlers;
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
@@ -43,30 +40,42 @@ namespace HospitalStaffMgmtApis.Agents.Services
         /// <summary>
         /// Adds a user message to the provided thread.
         /// </summary>
-        public Task AddUserMessageAsync(PersistentAgentThread thread, MessageRole role, string message)
+        public Task AddUserMessageAsync(string threadId, MessageRole role, string message)
         {
-            _logger.LogInformation($"Adding user message to thread {thread.Id}: {message}");
-            _client.Messages.CreateMessage(thread.Id, role, message);
+            _logger.LogInformation($"Adding user message to thread {threadId}: {message}");
+            _client.Messages.CreateMessage(threadId, role, message);
             return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Adds a user message to the provided thread.
+        /// </summary>
+        public async Task DeleteThreadForUser(string threadId)
+        { 
+            //// Clean up thread
+            await _client.Threads.DeleteThreadAsync(threadId);
+            _logger.LogInformation($"Thread {threadId} deleted.");
+             
         }
 
         /// <summary>
         /// Sends a message to the agent and waits for its final response.
         /// </summary>
-        public async Task<MessageContent?> GetAgentResponseAsync(MessageRole role, string message)
+        public async Task<MessageContent?> GetAgentResponseAsync(string threadId, MessageRole role, string message)
         {
-            var thread = CreateThread();
+           // var thread = CreateThread();
 
             try
             {
-                await AddUserMessageAsync(thread, role, message);
+               await AddUserMessageAsync(threadId, role, message);
 
-                ThreadRun run = _client.Runs.CreateRun(thread.Id, _agent.Id);
+                ThreadRun run = _client.Runs.CreateRun(threadId, _agent.Id);
+
 
                 do
                 {
                     Thread.Sleep(500);
-                    run = _client.Runs.GetRun(thread.Id, run.Id);
+                    run = _client.Runs.GetRun(threadId, run.Id);
 
                     if (run.Status == RunStatus.RequiresAction &&
                         run.RequiredAction is SubmitToolOutputsAction action)
@@ -80,13 +89,13 @@ namespace HospitalStaffMgmtApis.Agents.Services
                                 toolOutputs.Add(result);
                         }
 
-                        run = _client.Runs.SubmitToolOutputsToRun(thread.Id, run.Id, toolOutputs);
+                        run = _client.Runs.SubmitToolOutputsToRun(threadId, run.Id, toolOutputs);
                     }
 
                 } while (run.Status == RunStatus.Queued || run.Status == RunStatus.InProgress || run.Status == RunStatus.RequiresAction);
 
                 var messages = _client.Messages.GetMessages(
-                    threadId: thread.Id,
+                    threadId: threadId,
                     order: ListSortOrder.Descending
                 );
 
@@ -110,7 +119,7 @@ namespace HospitalStaffMgmtApis.Agents.Services
         /// <summary>
         /// Resolves a single tool call by matching it with a registered IToolHandler.
         /// </summary>
-        private async Task<ToolOutput?> GetResolvedToolOutput(RequiredToolCall toolCall)
+        public async Task<ToolOutput?> GetResolvedToolOutput(RequiredToolCall toolCall)
         {
             if (toolCall is not RequiredFunctionToolCall functionToolCall)
                 return null;
@@ -138,5 +147,6 @@ namespace HospitalStaffMgmtApis.Agents.Services
                 return null;
             }
         }
+
     }
 }

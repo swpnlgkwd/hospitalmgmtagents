@@ -20,13 +20,7 @@ export class Chat implements OnInit {
   isWaiting = false;
   showChat = false;
   suggestions: SmartSuggestion[] = [];
-//   suggestions: string[] = [
-//   "Show my shifts for this week",
-//   "Request leave for tomorrow",
-//   "Swap shift with Anjali",
-//   "Who's working in ICU today?",
-//   "Cancel my evening shift on Friday"
-// ];
+
 
 
 

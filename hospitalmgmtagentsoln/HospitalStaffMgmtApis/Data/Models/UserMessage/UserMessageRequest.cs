@@ -9,6 +9,11 @@
         /// The actual message text submitted by the user.
         /// </summary>
         public string Message { get; set; } = string.Empty;
+
+        /// <summary>
+        /// The actual message text submitted by the user.
+        /// </summary>
+        public string ThreadId { get; set; } = string.Empty;
     }
 }
 

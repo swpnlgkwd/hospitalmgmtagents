@@ -17,7 +17,7 @@ import { CommonModule } from '@angular/common';
 export class App {
   protected readonly title = signal('hospital-staff-mgmt');
   isLoggedIn(): boolean {
-    return !!localStorage.getItem('authToken'); // or your token key
+    return !!localStorage.getItem('token'); // or your token key
   }
 
 }

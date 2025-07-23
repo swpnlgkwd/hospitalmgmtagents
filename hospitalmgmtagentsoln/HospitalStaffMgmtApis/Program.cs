@@ -38,7 +38,7 @@ builder.Services.AddCors(options =>
 
 
 // Register StaffRepository with connection string
-builder.Services.AddSingleton<IStaffRepository>(provider =>
+builder.Services.AddScoped<IStaffRepository>(provider =>
 {
     var config = provider.GetRequiredService<IConfiguration>();
     var connectionString = config.GetConnectionString("DefaultConnection") ?? throw new ArgumentNullException("Default Connection Missing");
@@ -49,7 +49,7 @@ builder.Services.AddSingleton<IStaffRepository>(provider =>
 
 
 // Register StaffRepository with connection string
-builder.Services.AddSingleton<IDepartmentRepository>(provider =>
+builder.Services.AddScoped<IDepartmentRepository>(provider =>
 {
     var config = provider.GetRequiredService<IConfiguration>();
     var connectionString = config.GetConnectionString("DefaultConnection") ?? throw new ArgumentNullException("Default Connection Missing");
@@ -57,15 +57,22 @@ builder.Services.AddSingleton<IDepartmentRepository>(provider =>
 });
 
 // Register StaffRepository with connection string
-builder.Services.AddSingleton<IShiftRepository>(provider =>
+builder.Services.AddScoped<IShiftRepository>(provider =>
 {
     var config = provider.GetRequiredService<IConfiguration>();
     var connectionString = config.GetConnectionString("DefaultConnection") ?? throw new ArgumentNullException("Default Connection Missing");
     return new ShiftRepository(connectionString);
 });
 
+builder.Services.AddScoped<IAgentConversationRepository>(provider =>
+{
+    var config = provider.GetRequiredService<IConfiguration>();
+    var connectionString = config.GetConnectionString("DefaultConnection") ?? throw new ArgumentNullException("Default Connection Missing");
+    return new AgentConversationRepository(connectionString);
+});
+
 // Register StaffRepository with connection string
-builder.Services.AddSingleton<ILeaveRequestRepository>(provider =>
+builder.Services.AddScoped<ILeaveRequestRepository>(provider =>
 {
     var config = provider.GetRequiredService<IConfiguration>();
     var connectionString = config.GetConnectionString("DefaultConnection") ?? throw new ArgumentNullException("Default Connection Missing");
@@ -109,7 +116,7 @@ builder.Services.AddScoped<IToolHandler, ViewBacktoBackWeeklyShiftHandler>();
 // Register Agent infrastructure
 builder.Services.AddSingleton<IAgentStore, FileAgentStore>();
 builder.Services.AddSingleton<IAgentManager, AgentManager>();
-builder.Services.AddSingleton<IScheduleManager, ScheduleManager>();
+builder.Services.AddScoped<IScheduleManager, ScheduleManager>();
 
 builder.Services.AddScoped<IAuthManager, AuthManager>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
@@ -145,11 +152,10 @@ builder.Services.AddScoped<AgentService>(sp =>
     var agentManager = sp.GetRequiredService<IAgentManager>();
     var agent = agentManager.GetAgent(); // Should return already-created PersistentAgent
     var client = sp.GetRequiredService<PersistentAgentsClient>();
-    var staffRepo = sp.GetRequiredService<IStaffRepository>();
     var logger = sp.GetRequiredService<ILogger<AgentService>>();
     var toolHandlers = sp.GetServices<IToolHandler>(); // Resolves all registered handlers
 
-    return new AgentService(client, agent, staffRepo, toolHandlers, logger);
+    return new AgentService(client, agent, toolHandlers, logger);
 });
 
 builder.Services.AddHttpContextAccessor();

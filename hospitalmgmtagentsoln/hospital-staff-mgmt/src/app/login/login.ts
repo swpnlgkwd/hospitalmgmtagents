@@ -28,10 +28,14 @@ export class Login  {
     const { username, password } = this.loginForm.value;
 
     this.auth.login({ username, password }).subscribe({
-      next: (res) => {
+      next: (res:any) => {
+        console.log('Login successful:', res);
+        console.log(res);
         this.loading = false;        
         this.router.navigate(['/calendar']); // Or appropriate role-based route
-        localStorage.setItem('authToken', res.token);
+        localStorage.setItem('token', res.loginResponse.token);
+        localStorage.setItem('threadId', res.threadId);
+        console.log(res.threadId);
       },
       error: () => {
         this.loading = false;

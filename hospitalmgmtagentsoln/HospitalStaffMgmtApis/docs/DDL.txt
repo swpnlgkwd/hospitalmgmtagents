@@ -74,6 +74,13 @@ CREATE TABLE SmartSuggestions (
     expires_at DATETIME NULL
 );
 
+CREATE TABLE AgentConversations (
+    user_id NVARCHAR(50) PRIMARY KEY,
+    thread_id NVARCHAR(100),
+    created_at DATETIME DEFAULT GETDATE()
+);
+
+
 
 
 -- Index for fast lookups on department-based staff queries
