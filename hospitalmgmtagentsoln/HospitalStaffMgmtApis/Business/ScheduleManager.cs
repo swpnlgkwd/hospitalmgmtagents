@@ -1,5 +1,5 @@
 ﻿using HospitalStaffMgmtApis.Business.Interfaces;
-using HospitalStaffMgmtApis.Data.Model;
+using HospitalStaffMgmtApis.Data.Models.Shift;
 using HospitalStaffMgmtApis.Data.Repository.Interfaces;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -11,14 +11,14 @@ namespace HospitalStaffMgmtApis.Business
     /// </summary>
     public class ScheduleManager : IScheduleManager
     {
-        private readonly IStaffRepository _repository;
+        private readonly IShiftRepository _repository;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ScheduleManager"/> class.
         /// </summary>
         /// <param name="staffRepository">Repository used to access staff scheduling data.</param>
-        public ScheduleManager(IStaffRepository staffRepository, 
+        public ScheduleManager(IShiftRepository staffRepository, 
             IHttpContextAccessor httpContextAccessor)
         {
             _httpContextAccessor = httpContextAccessor;

@@ -13,11 +13,11 @@ namespace HospitalStaffMgmtApis.Agents.Handlers
     /// </summary>
     public class AutoReplaceShiftsForLeaveToolHandler : IToolHandler
     {
-        private readonly IStaffRepository _repository;
+        private readonly ILeaveRequestRepository _repository;
         private readonly ILogger<AutoReplaceShiftsForLeaveToolHandler> _logger;
 
         public AutoReplaceShiftsForLeaveToolHandler(
-            IStaffRepository repository,
+            ILeaveRequestRepository repository,
             ILogger<AutoReplaceShiftsForLeaveToolHandler> logger)
         {
             _repository = repository;

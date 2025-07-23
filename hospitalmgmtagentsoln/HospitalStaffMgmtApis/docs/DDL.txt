@@ -36,6 +36,25 @@ CREATE TABLE Staff (
     CONSTRAINT FK_Staff_Department FOREIGN KEY (department_id) REFERENCES Department(department_id)
 );
 
+
+-- 7. PlannedShift Table
+CREATE TABLE PlannedShift (
+    planned_shift_id INT IDENTITY(1,1) PRIMARY KEY,
+    shift_date DATE NOT NULL,
+    shift_type_id INT NOT NULL,
+    department_id INT NOT NULL,
+    slot_number INT NOT NULL,
+    shift_status_id INT NOT NULL,
+    assigned_staff_id INT NULL,
+
+    CONSTRAINT FK_PlannedShift_ShiftType FOREIGN KEY (shift_type_id) REFERENCES ShiftType(shift_type_id),
+    CONSTRAINT FK_PlannedShift_Department FOREIGN KEY (department_id) REFERENCES Department(department_id),
+    CONSTRAINT FK_PlannedShift_Staff FOREIGN KEY (assigned_staff_id) REFERENCES Staff(staff_id),
+    CONSTRAINT FK_PlannedShift_Status FOREIGN KEY (shift_status_id) REFERENCES ShiftStatus(shift_status_id)
+);
+
+
+
 CREATE TABLE UserCredential (
     credential_id INT IDENTITY(1,1) PRIMARY KEY,
     staff_id INT NOT NULL UNIQUE,   -- One-to-one with Staff
@@ -63,21 +82,6 @@ CREATE INDEX IX_Staff_RoleId ON Staff(role_id);
 
 
 
--- 7. PlannedShift Table
-CREATE TABLE PlannedShift (
-    planned_shift_id INT IDENTITY(1,1) PRIMARY KEY,
-    shift_date DATE NOT NULL,
-    shift_type_id INT NOT NULL,
-    department_id INT NOT NULL,
-    slot_number INT NOT NULL,
-    shift_status_id INT NOT NULL,
-    assigned_staff_id INT NULL,
-
-    CONSTRAINT FK_PlannedShift_ShiftType FOREIGN KEY (shift_type_id) REFERENCES ShiftType(shift_type_id),
-    CONSTRAINT FK_PlannedShift_Department FOREIGN KEY (department_id) REFERENCES Department(department_id),
-    CONSTRAINT FK_PlannedShift_Staff FOREIGN KEY (assigned_staff_id) REFERENCES Staff(staff_id),
-    CONSTRAINT FK_PlannedShift_Status FOREIGN KEY (shift_status_id) REFERENCES ShiftStatus(shift_status_id)
-);
 
 
 -- Optional index to speed up available slot lookup

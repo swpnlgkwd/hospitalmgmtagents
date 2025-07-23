@@ -1,4 +1,4 @@
-﻿using HospitalStaffMgmtApis.Data.Model;
+﻿using HospitalStaffMgmtApis.Data.Models.Shift;
 
 namespace HospitalStaffMgmtApis.Business.Interfaces
 {

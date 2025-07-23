@@ -1,7 +1,7 @@
 using Azure.AI.Agents.Persistent;
 using HospitalStaffMgmtApis.Agents;
 using HospitalStaffMgmtApis.Agents.Services;
-using HospitalStaffMgmtApis.Data.Model;
+using HospitalStaffMgmtApis.Data.Models.UserMessage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

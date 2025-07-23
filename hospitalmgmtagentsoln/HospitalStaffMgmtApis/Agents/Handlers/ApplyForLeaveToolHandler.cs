@@ -1,6 +1,7 @@
 ﻿using Azure.AI.Agents.Persistent;
 using HospitalStaffMgmtApis.Agents.Tools;
 using HospitalStaffMgmtApis.Data.Model;
+using HospitalStaffMgmtApis.Data.Models.StaffLeaveRequest;
 using HospitalStaffMgmtApis.Data.Repository.Interfaces;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
@@ -13,11 +14,11 @@ namespace HospitalStaffMgmtApis.Agents.Handlers
     /// </summary>
     public class ApplyForLeaveToolHandler : IToolHandler
     {
-        private readonly IStaffRepository _repository;
+        private readonly ILeaveRequestRepository _repository;
         private readonly ILogger<ApplyForLeaveToolHandler> _logger;
 
         public ApplyForLeaveToolHandler(
-            IStaffRepository repository,
+            ILeaveRequestRepository repository,
             ILogger<ApplyForLeaveToolHandler> logger)
         {
             _repository = repository;

@@ -1,5 +1,5 @@
 using HospitalStaffMgmtApis.Business.Interfaces;
-using HospitalStaffMgmtApis.Data.Model;
+using HospitalStaffMgmtApis.Data.Models.Shift;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

@@ -15,9 +15,9 @@ Working Prompt
 
 6. Show me the shift schedule of Asha Patil
 
-7. Give me schedule between 19th July 2025 and 21 July 2025 schedule for Sunita.
+7. Give me schedule between 19th July 2025 and 30 July 2025 schedule for Sunita.
 
-8. Give me OPD schedule for next Monday.
+8. Give me OPD schedule for next Monday. -- not wokring
 
 9. Show me the Pediatrics department's schedule for this week
 
@@ -25,14 +25,11 @@ Working Prompt
 
 11. Show me the schedule for a staff member named  Asha from 21st July to 24th July
 
-Shift Swap Prompts 	
-- Swap Swapnil from the ICU night shift on 25th July with Asha from the morning shift on 24th July
-
-Leave Prompts
-- apply casual leave for Asha  on 25th July 2025
 
 FindAvailableStaffPrompt 
-- Who can work tomorrow's night shift?
+ -  Who can work tomorrow's night shift?
+
+ - Who can work tomorrow's night shift for pediatrics department?
 
  - Who is free to work the night shift tomorrow?
 
@@ -40,9 +37,18 @@ FindAvailableStaffPrompt
 
  - We need a nurse for the icu department tonight — who’s not scheduled yet?
 
- - I need someone to cover a duty in pediatrics this Friday night. Who’s free?
+ - I need someone to cover a duty in pediatrics this Friday night. Who’s free? -- not working
 
  - Help me reassign a shift — who is eligible and free?
+
+
+
+Shift Swap Prompts 	
+- Swap Swapnil from the ICU night shift on 25th July with Asha from the morning shift on 24th July
+
+Leave Prompts
+- apply casual leave for Asha  on 25th July 2025
+
 
 
 

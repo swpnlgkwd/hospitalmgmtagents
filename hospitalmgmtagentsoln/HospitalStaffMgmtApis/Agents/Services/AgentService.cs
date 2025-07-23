@@ -101,9 +101,9 @@ namespace HospitalStaffMgmtApis.Agents.Services
             }
             finally
             {
-                // Clean up thread
-                await _client.Threads.DeleteThreadAsync(thread.Id);
-                _logger.LogInformation($"Thread {thread.Id} deleted.");
+                //// Clean up thread
+                //await _client.Threads.DeleteThreadAsync(thread.Id);
+                //_logger.LogInformation($"Thread {thread.Id} deleted.");
             }
         }
 

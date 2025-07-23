@@ -1,6 +1,7 @@
 ﻿using Azure.AI.Agents.Persistent;
 using HospitalStaffMgmtApis.Agents.Tools;
 using HospitalStaffMgmtApis.Data.Model;
+using HospitalStaffMgmtApis.Data.Models.Shift;
 using HospitalStaffMgmtApis.Data.Repository.Interfaces;
 using System.Text.Json;
 
@@ -11,10 +12,10 @@ namespace HospitalStaffMgmtApis.Agents.Handlers
     /// </summary>
     public class ShiftSwapToolHandler : IToolHandler
     {
-        private readonly IStaffRepository _repository;
+        private readonly IShiftRepository _repository;
         private readonly ILogger<ShiftSwapToolHandler> _logger;
 
-        public ShiftSwapToolHandler(IStaffRepository repository, ILogger<ShiftSwapToolHandler> logger)
+        public ShiftSwapToolHandler(IShiftRepository repository, ILogger<ShiftSwapToolHandler> logger)
         {
             _repository = repository;
             _logger = logger;

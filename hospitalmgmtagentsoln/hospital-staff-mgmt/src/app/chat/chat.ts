@@ -18,7 +18,7 @@ export class Chat implements OnInit {
   messageText: string = '';
   messages: { sender: string, text: string }[] = [];
   isWaiting = false;
-  showChat = true;
+  showChat = false;
   suggestions: SmartSuggestion[] = [];
 //   suggestions: string[] = [
 //   "Show my shifts for this week",

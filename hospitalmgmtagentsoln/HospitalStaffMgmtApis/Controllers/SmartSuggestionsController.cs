@@ -1,5 +1,5 @@
 ﻿using HospitalStaffMgmtApis.Business.Interfaces;
-using HospitalStaffMgmtApis.Data.Models;
+using HospitalStaffMgmtApis.Data.Models.SmartSuggestions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HospitalStaffMgmtApis.Controllers
@@ -8,11 +8,11 @@ namespace HospitalStaffMgmtApis.Controllers
     [Route("api/[controller]")]
     public class SmartSuggestionsController : ControllerBase
     {
-        private readonly ISchedulerSuggestionService _suggestionService;
+        private readonly ISmartSuggestionManager _suggestionService;
         private readonly ILogger<SmartSuggestionsController> _logger;
 
         public SmartSuggestionsController(
-            ISchedulerSuggestionService suggestionService,
+            ISmartSuggestionManager suggestionService,
             ILogger<SmartSuggestionsController> logger)
         {
             _suggestionService = suggestionService;

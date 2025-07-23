@@ -4,6 +4,11 @@ using Azure.Identity;
 using HospitalStaffMgmtApis.Agents;
 using HospitalStaffMgmtApis.Agents.AgentStore;
 using HospitalStaffMgmtApis.Agents.Handlers;
+using HospitalStaffMgmtApis.Agents.Handlers.DateHandlers;
+using HospitalStaffMgmtApis.Agents.Handlers.DepartmentHandlers;
+using HospitalStaffMgmtApis.Agents.Handlers.LeaveRequestHandlers;
+using HospitalStaffMgmtApis.Agents.Handlers.ShiftHandlers;
+using HospitalStaffMgmtApis.Agents.Handlers.StaffHandlers;
 using HospitalStaffMgmtApis.Agents.Services;
 using HospitalStaffMgmtApis.Business;
 using HospitalStaffMgmtApis.Business.Interfaces;
@@ -13,6 +18,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,7 +42,39 @@ builder.Services.AddSingleton<IStaffRepository>(provider =>
 {
     var config = provider.GetRequiredService<IConfiguration>();
     var connectionString = config.GetConnectionString("DefaultConnection") ?? throw new ArgumentNullException("Default Connection Missing");
-    return new StaffRepository(connectionString);
+    var shiftRepo = provider.GetRequiredService<IShiftRepository>();
+    var deptRepo = provider.GetRequiredService<IDepartmentRepository>();
+    return new StaffRepository(connectionString,shiftRepo,deptRepo);
+});
+
+
+// Register StaffRepository with connection string
+builder.Services.AddSingleton<IDepartmentRepository>(provider =>
+{
+    var config = provider.GetRequiredService<IConfiguration>();
+    var connectionString = config.GetConnectionString("DefaultConnection") ?? throw new ArgumentNullException("Default Connection Missing");
+    return new DepartmentRepository(connectionString);
+});
+
+// Register StaffRepository with connection string
+builder.Services.AddSingleton<IShiftRepository>(provider =>
+{
+    var config = provider.GetRequiredService<IConfiguration>();
+    var connectionString = config.GetConnectionString("DefaultConnection") ?? throw new ArgumentNullException("Default Connection Missing");
+    return new ShiftRepository(connectionString);
+});
+
+// Register StaffRepository with connection string
+builder.Services.AddSingleton<ILeaveRequestRepository>(provider =>
+{
+    var config = provider.GetRequiredService<IConfiguration>();
+    var connectionString = config.GetConnectionString("DefaultConnection") ?? throw new ArgumentNullException("Default Connection Missing");
+    return new LeaveRequestRepository(connectionString);
+});
+
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.Never;
 });
 
 builder.Services.AddScoped<IAuthRepository>(provider =>
@@ -66,7 +104,7 @@ builder.Services.AddScoped<IToolHandler, DepartmentNameResolverToolHandler>();
 builder.Services.AddScoped<IToolHandler, FindAvailableStaffToolHandler>();
 builder.Services.AddScoped<IToolHandler, UncoverShiftToolHandler>();
 builder.Services.AddScoped<IToolHandler, ViewPendingLeaveRequestToolHandler>();
-
+builder.Services.AddScoped<IToolHandler, ViewBacktoBackWeeklyShiftHandler>();
 
 // Register Agent infrastructure
 builder.Services.AddSingleton<IAgentStore, FileAgentStore>();
@@ -75,7 +113,7 @@ builder.Services.AddSingleton<IScheduleManager, ScheduleManager>();
 
 builder.Services.AddScoped<IAuthManager, AuthManager>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
-builder.Services.AddScoped<ISchedulerSuggestionService, SchedulerSuggestionService>();
+builder.Services.AddScoped<ISmartSuggestionManager, SmartSuggestionManager>();
 
 
 var key = builder.Configuration["Jwt:Key"];

@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { FullCalendarComponent, FullCalendarModule } from '@fullcalendar/angular'; // standalone module
 import { CalendarOptions } from '@fullcalendar/core/index.js';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -15,7 +15,7 @@ import { ShiftScheduleService } from '../services/shift-schedule.service';
 })
 export class ShiftCalendarComponent implements OnInit {
 
-  constructor(private scheduleService: ShiftScheduleService) { }
+  constructor(private scheduleService: ShiftScheduleService, private cdRef: ChangeDetectorRef) { }
 
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
@@ -65,6 +65,7 @@ export class ShiftCalendarComponent implements OnInit {
           events: events
         };
         console.log('Updated calendar options:', this.calendarOptions);
+        this.cdRef.detectChanges(); // Ensure view updates
       },
       error: err => {
         console.error('Failed to fetch shifts:', err);
