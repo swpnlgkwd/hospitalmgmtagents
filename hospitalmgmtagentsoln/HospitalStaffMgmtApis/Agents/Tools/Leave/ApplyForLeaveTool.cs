@@ -1,7 +1,7 @@
 ﻿using Azure.AI.Agents.Persistent;
 using System.Text.Json;
 
-namespace HospitalStaffMgmtApis.Agents.Tools
+namespace HospitalStaffMgmtApis.Agents.Tools.Leave
 {
     public static class ApplyForLeaveTool
     {

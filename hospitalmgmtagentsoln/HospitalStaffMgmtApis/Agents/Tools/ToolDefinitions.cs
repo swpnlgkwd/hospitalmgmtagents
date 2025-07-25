@@ -18,8 +18,8 @@ namespace HospitalStaffMgmtApis.Agents.Tools
             StaffNameResolverTool.GetTool(),
             FindAvailableStaffTool.GetTool(),
             ViewPendingLeaveRequestsTool.GetTool(),
-            UncoverShiftsTool.GetTool()
-            //ApplyForLeaveTool.GetTool(),
+            UncoverShiftsTool.GetTool(),
+            ApplyForLeaveTool.GetTool()
             //AutoReplaceShiftsForLeaveTool.GetTool(),
 
             //ShiftSwapTool.GetTool(),

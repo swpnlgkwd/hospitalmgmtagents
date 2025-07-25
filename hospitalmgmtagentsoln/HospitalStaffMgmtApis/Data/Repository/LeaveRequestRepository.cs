@@ -63,10 +63,101 @@ namespace HospitalStaffMgmtApis.Data.Repository
             return rowsAffected > 0;
         }
 
+        /// <summary>
+        /// Retrieves all leave requests that are pending approval.
+        /// </summary>
+        /// <returns>List of pending leave requests.</returns>
+        /// <summary>
+        public async Task<List<PendingLeaveResponse>> FetchPendingLeaveRequestsAsync(PendingLeaveRequest? pendingLeaveRequest = null)
+        {
+            var pendingRequests = new List<PendingLeaveResponse>();
+
+            using var conn = new SqlConnection(sqlConnectionString);
+            await conn.OpenAsync();
+
+            var query = @"
+                SELECT 
+                    lr.id AS leave_request_id,
+                    s.staff_id,
+                    s.name AS staff_name,
+                    r.role_name as role_name,
+                    d.name AS department_name,
+                    lr.leave_start,
+                    lr.leave_end,
+                    lr.status AS status,
+                    lr.leave_type AS leave_type
+                FROM LeaveRequests lr
+                INNER JOIN Staff s ON lr.staff_id = s.staff_id
+                INNER  JOIN Role r ON s.role_id = r.role_id 
+                INNER JOIN Department d ON s.department_id = d.department_id
+                WHERE lr.status = 'Pending'";
+
+            var filters = new List<string>();
+            var cmd = new SqlCommand { Connection = conn };
+
+            if (pendingLeaveRequest != null)
+            {
+                if (!string.IsNullOrWhiteSpace(pendingLeaveRequest.FromDate) &&
+                    DateTime.TryParse(pendingLeaveRequest.FromDate, out var fromDate))
+                {
+                    filters.Add("lr.leave_start >= @fromDate");
+                    cmd.Parameters.AddWithValue("@fromDate", fromDate);
+                }
+
+                if (!string.IsNullOrWhiteSpace(pendingLeaveRequest.ToDate) &&
+                    DateTime.TryParse(pendingLeaveRequest.ToDate, out var toDate))
+                {
+                    filters.Add("lr.leave_end <= @toDate");
+                    cmd.Parameters.AddWithValue("@toDate", toDate);
+                }
+
+                if (!string.IsNullOrWhiteSpace(pendingLeaveRequest.StaffName))
+                {
+                    filters.Add("s.name LIKE @staffName");
+                    cmd.Parameters.AddWithValue("@staffName", $"%{pendingLeaveRequest.StaffName}%");
+                }
+
+                if (!string.IsNullOrWhiteSpace(pendingLeaveRequest.DepartmentName))
+                {
+                    filters.Add("d.name LIKE @departmentName");
+                    cmd.Parameters.AddWithValue("@departmentName", $"%{pendingLeaveRequest.DepartmentName}%");
+                }
+            }
+
+            if (filters.Count > 0)
+            {
+                query += " AND " + string.Join(" AND ", filters);
+            }
+
+            cmd.CommandText = query;
+
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                pendingRequests.Add(new PendingLeaveResponse
+                {
+                    LeaveRequestId = reader.GetInt32(reader.GetOrdinal("leave_request_id")),
+                    StaffId = reader.GetInt32(reader.GetOrdinal("staff_id")),
+                    StaffName = reader.GetString(reader.GetOrdinal("staff_name")),
+                    Role = reader.GetString(reader.GetOrdinal("role_name")),
+                    DepartmentName = reader.GetString(reader.GetOrdinal("department_name")),
+                    LeaveStartDate = reader.GetDateTime(reader.GetOrdinal("leave_start")),
+                    LeaveEndDate = reader.GetDateTime(reader.GetOrdinal("leave_end")),
+                    LeaveStatus = reader.GetString(reader.GetOrdinal("status")),
+                    LeaveType = reader.GetString(reader.GetOrdinal("leave_type"))
+                });
+            }
+
+            return pendingRequests;
+        }
+
+
 
         // view leave requests by staff id, department, and date range,by role
 
         // Approve or reject leave requests
+
+
 
         // cancel leave request
 
@@ -187,127 +278,7 @@ namespace HospitalStaffMgmtApis.Data.Repository
         }
 
 
-        ///// <summary>
-        ///// Retrieves all leave requests that are pending approval.
-        ///// </summary>
-        ///// <returns>List of pending leave requests.</returns>
-        //public async Task<List<PendingLeaveResponse>> GetPendingLeaveRequestsAsync()
-        //{
-        //    var pendingRequests = new List<PendingLeaveResponse>();
 
-        //    using var conn = new SqlConnection(sqlConnectionString);
-        //    await conn.OpenAsync();
-
-        //    var query = @"
-        //SELECT 
-        //    lr.id,
-        //    s.name AS staff_name,
-        //    d.name AS department_name,
-        //    lr.leave_start,
-        //    lr.leave_end
-        //FROM LeaveRequests lr
-        //INNER JOIN Staff s ON lr.staff_id = s.staff_id
-        //INNER JOIN Department d ON s.department_id = d.department_id
-        //WHERE lr.status = 'Pending'";
-
-        //    using var cmd = new SqlCommand(query, conn);
-        //    using var reader = await cmd.ExecuteReaderAsync();
-
-        //    while (await reader.ReadAsync())
-        //    {
-        //        pendingRequests.Add(new PendingLeaveResponse
-        //        {
-        //            LeaveRequestId = reader.GetInt32(reader.GetOrdinal("id")),
-        //            StaffName = reader.GetString(reader.GetOrdinal("staff_name")),
-        //            LeaveStartDate = reader.GetDateTime(reader.GetOrdinal("leave_start")),
-        //            LeaveEndDate = reader.GetDateTime(reader.GetOrdinal("leave_end")),
-        //            DepartmentName = reader.GetString(reader.GetOrdinal("department_name"))
-        //        });
-        //    }
-
-        //    return pendingRequests;
-        //}
-
-
-        /// <summary>
-        /// Retrieves all leave requests that are pending approval.
-        /// </summary>
-        /// <returns>List of pending leave requests.</returns>
-        /// <summary>
-        /// Fetches all pending leave requests, optionally filtered by date range, staff name, or department name.
-        /// </summary>
-        /// <param name="pendingLeaveRequest">Filter criteria for retrieving pending requests.</param>
-        /// <returns>List of matching leave requests.</returns>
-        public async Task<List<PendingLeaveResponse>> FetchPendingLeaveRequestsAsync(PendingLeaveRequest? pendingLeaveRequest = null)
-        {
-            var pendingRequests = new List<PendingLeaveResponse>();
-
-            using var conn = new SqlConnection(sqlConnectionString);
-            await conn.OpenAsync();
-
-            var query = @"
-        SELECT 
-            s.name AS staff_name,
-            d.name AS department_name,
-            lr.leave_start,
-            lr.leave_end
-        FROM LeaveRequests lr
-        INNER JOIN Staff s ON lr.staff_id = s.staff_id
-        INNER JOIN Department d ON s.department_id = d.department_id
-        WHERE lr.status = 'Pending'";
-
-            var filters = new List<string>();
-            var cmd = new SqlCommand();
-            cmd.Connection = conn;
-
-            if (pendingLeaveRequest != null)
-            {
-                if (!string.IsNullOrEmpty(pendingLeaveRequest.FromDate))
-                {
-                    filters.Add("lr.leave_start >= @fromDate");
-                    cmd.Parameters.AddWithValue("@fromDate", DateTime.Parse(pendingLeaveRequest.FromDate));
-                }
-
-                if (!string.IsNullOrEmpty(pendingLeaveRequest.ToDate))
-                {
-                    filters.Add("lr.leave_end <= @toDate");
-                    cmd.Parameters.AddWithValue("@toDate", DateTime.Parse(pendingLeaveRequest.ToDate));
-                }
-
-                if (!string.IsNullOrEmpty(pendingLeaveRequest.StaffName))
-                {
-                    filters.Add("s.name LIKE @staffName");
-                    cmd.Parameters.AddWithValue("@staffName", $"%{pendingLeaveRequest.StaffName}%");
-                }
-
-                if (!string.IsNullOrEmpty(pendingLeaveRequest.DepartmentName))
-                {
-                    filters.Add("d.name LIKE @departmentName");
-                    cmd.Parameters.AddWithValue("@departmentName", $"%{pendingLeaveRequest.DepartmentName}%");
-                }
-            }
-
-            if (filters.Count > 0)
-            {
-                query += " AND " + string.Join(" AND ", filters);
-            }
-
-            cmd.CommandText = query;
-
-            using var reader = await cmd.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                pendingRequests.Add(new PendingLeaveResponse
-                {
-                    StaffName = reader.GetString(reader.GetOrdinal("staff_name")),
-                    DepartmentName = reader.GetString(reader.GetOrdinal("department_name")),
-                    LeaveStartDate = reader.GetDateTime(reader.GetOrdinal("leave_start")),
-                    LeaveEndDate = reader.GetDateTime(reader.GetOrdinal("leave_end"))
-                });
-            }
-
-            return pendingRequests;
-        }
 
     }
 }

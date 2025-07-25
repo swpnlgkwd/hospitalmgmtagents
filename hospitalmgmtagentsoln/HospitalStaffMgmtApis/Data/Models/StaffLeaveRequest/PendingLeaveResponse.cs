@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.Json.Serialization;
 
 namespace HospitalStaffMgmtApis.Data.Models.StaffLeaveRequest
 {
@@ -8,32 +9,32 @@ namespace HospitalStaffMgmtApis.Data.Models.StaffLeaveRequest
     /// </summary>
     public class PendingLeaveResponse
     {
-        /// <summary>
-        /// Optional. Start date to filter leave requests (format: YYYY-MM-DD).
-        /// Supports natural language phrases like "today" or "this week".
-        /// </summary>
-        public int? LeaveRequestId { get; set; }
+        [JsonPropertyName("leaveRequestId")]
+        public int LeaveRequestId { get; set; }
 
-        /// <summary>
-        /// Optional. Start date to filter leave requests (format: YYYY-MM-DD).
-        /// Supports natural language phrases like "today" or "this week".
-        /// </summary>
-        public DateTime? LeaveStartDate { get; set; }
+        [JsonPropertyName("departmentName")]
+        public string DepartmentName { get; set; } = string.Empty; // e.g. Cardiology, Neurology
 
-        /// <summary>
-        /// Optional. End date to filter leave requests (format: YYYY-MM-DD).
-        /// Used in conjunction with FromDate to form a date range.
-        /// </summary>
-        public DateTime? LeaveEndDate { get; set; }
+        [JsonPropertyName("staffName")]
+        public string StaffName { get; set; } = string.Empty; // e.g. John Doe
 
-        /// <summary>
-        /// Optional. Full or partial name of the staff member whose pending leave requests should be retrieved.
-        /// </summary>
-        public string? StaffName { get; set; }
+        [JsonPropertyName("staff_id")]
+        public int StaffId { get; set; }  // e.g. 1234
 
-        /// <summary>
-        /// Optional. Department name to filter leave requests (e.g., ICU, Pediatrics).
-        /// </summary>
-        public string? DepartmentName { get; set; }
+        [JsonPropertyName("role")]
+        public string Role { get; set; } = string.Empty; // e.g. Nurse, Doctor
+
+        [JsonPropertyName("leaveStart")]
+        public DateTime LeaveStartDate { get; set; }
+
+        [JsonPropertyName("leaveEnd")]
+        public DateTime LeaveEndDate { get; set; }
+
+        [JsonPropertyName("leaveType")]
+        public string LeaveType { get; set; } = string.Empty; // e.g. Sick Leave
+
+        [JsonPropertyName("status")]
+        public string LeaveStatus { get; set; } = string.Empty; // e.g. Pending
     }
+
 }

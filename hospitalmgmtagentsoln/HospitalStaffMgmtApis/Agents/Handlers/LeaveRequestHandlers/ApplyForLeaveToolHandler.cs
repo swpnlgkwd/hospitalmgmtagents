@@ -1,12 +1,12 @@
 ﻿using Azure.AI.Agents.Persistent;
-using HospitalStaffMgmtApis.Agents.Tools;
+using HospitalStaffMgmtApis.Agents.Tools.Leave;
 using HospitalStaffMgmtApis.Data.Model;
 using HospitalStaffMgmtApis.Data.Models.StaffLeaveRequest;
 using HospitalStaffMgmtApis.Data.Repository.Interfaces;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
-namespace HospitalStaffMgmtApis.Agents.Handlers
+namespace HospitalStaffMgmtApis.Agents.Handlers.LeaveRequestHandlers
 {
     /// <summary>
     /// Handler for the ApplyForLeaveTool.
