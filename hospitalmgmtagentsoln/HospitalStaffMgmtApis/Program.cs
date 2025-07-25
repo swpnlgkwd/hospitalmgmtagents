@@ -10,6 +10,7 @@ using HospitalStaffMgmtApis.Agents.Handlers.LeaveRequestHandlers;
 using HospitalStaffMgmtApis.Agents.Handlers.ShiftHandlers;
 using HospitalStaffMgmtApis.Agents.Handlers.StaffHandlers;
 using HospitalStaffMgmtApis.Agents.Services;
+using HospitalStaffMgmtApis.Agents.Tools.Leave.HospitalStaffMgmtApis.Agents.Handlers.LeaveRequestHandlers;
 using HospitalStaffMgmtApis.Business;
 using HospitalStaffMgmtApis.Business.Interfaces;
 using HospitalStaffMgmtApis.Data.Repository;
@@ -112,6 +113,7 @@ builder.Services.AddScoped<IToolHandler, FindAvailableStaffToolHandler>();
 builder.Services.AddScoped<IToolHandler, UncoverShiftToolHandler>();
 builder.Services.AddScoped<IToolHandler, ViewPendingLeaveRequestToolHandler>();
 builder.Services.AddScoped<IToolHandler, ViewBacktoBackWeeklyShiftHandler>();
+builder.Services.AddScoped<IToolHandler, ApproveOrRejectLeaveRequestToolHandler>();
 
 // Register Agent infrastructure
 builder.Services.AddSingleton<IAgentStore, FileAgentStore>();

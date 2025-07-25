@@ -17,6 +17,7 @@ namespace HospitalStaffMgmtApis.Data.Repository.Interfaces
         Task<List<LeaveImpactedShiftResponse>> FetchLeaveImpactedShiftsAsync(GetImpactedShiftsByLeaveRequest request);
 
         //Task<List<PendingLeaveResponse>> GetPendingLeaveRequestsAsync();
+        Task<List<LeaveImpactedShiftResponse>?> ApproveOrRejectLeaveRequestAsync(LeaveActionRequest request);
 
 
 

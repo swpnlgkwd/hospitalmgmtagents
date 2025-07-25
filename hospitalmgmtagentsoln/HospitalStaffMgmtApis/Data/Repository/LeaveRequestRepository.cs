@@ -1,5 +1,6 @@
 ﻿using HospitalStaffMgmtApis.Data.Model;
 using HospitalStaffMgmtApis.Data.Models;
+using HospitalStaffMgmtApis.Data.Models.Shift;
 using HospitalStaffMgmtApis.Data.Models.StaffLeaveRequest;
 using HospitalStaffMgmtApis.Data.Repository.Interfaces;
 using System.Data.SqlClient;
@@ -152,14 +153,155 @@ namespace HospitalStaffMgmtApis.Data.Repository
         }
 
 
+        // Approve or Reject Leave Request
 
-        // view leave requests by staff id, department, and date range,by role
+        /// <summary>
+        /// Automatically replaces shifts impacted by an approved leave with available staff.
+        /// </summary>
+        /// <param name="request">Request containing the leave period and staff ID.</param>
+        /// <returns>Response with details of successful and unsuccessful shift replacements.</returns>
+        public async Task<List<LeaveImpactedShiftResponse>?> ApproveOrRejectLeaveRequestAsync(LeaveActionRequest request)
+        {
+            using var conn = new SqlConnection(sqlConnectionString);
+            await conn.OpenAsync();
 
-        // Approve or reject leave requests
+            // ✅ Step 0: Normalize and validate approval status
+            request.ApprovalStatus = NormalizeApprovalStatus(request.ApprovalStatus);
 
+            if (string.IsNullOrWhiteSpace(request.ApprovalStatus))
+                throw new ArgumentException("Invalid ApprovalStatus. Expected 'Approved' or 'Rejected'.");
 
+            int? leaveRequestId = request.LeaveRequestId;
 
-        // cancel leave request
+            // ✅ Step 1: Resolve leaveRequestId if not provided
+            if (!leaveRequestId.HasValue)
+            {
+                if (string.IsNullOrWhiteSpace(request.StaffName) ||
+                    string.IsNullOrWhiteSpace(request.LeaveStartDate) ||
+                    string.IsNullOrWhiteSpace(request.LeaveEndDate))
+                {
+                    return null; // Missing fallback info
+                }
+
+                if (!DateTime.TryParse(request.LeaveStartDate, out var fromDate) ||
+                    !DateTime.TryParse(request.LeaveEndDate, out var toDate))
+                {
+                    return null; // Invalid dates
+                }
+
+                var resolveCmd = conn.CreateCommand();
+                resolveCmd.CommandText = @"
+                     SELECT TOP 1 lr.id 
+                    FROM LeaveRequests lr
+                    INNER JOIN Staff s ON lr.staff_id = s.staff_id
+                    WHERE s.name LIKE '%' + @name + '%'
+                      AND lr.leave_start = @fromDate AND lr.leave_end = @toDate
+                      AND lr.status = 'Pending'
+                    ORDER BY lr.leave_start ASC";
+
+                resolveCmd.Parameters.AddWithValue("@name", request.StaffName);
+                resolveCmd.Parameters.AddWithValue("@fromDate", fromDate);
+                resolveCmd.Parameters.AddWithValue("@toDate", toDate);
+
+                var resolvedId = await resolveCmd.ExecuteScalarAsync();
+                if (resolvedId == null)
+                {
+                    return null;
+                }
+
+                leaveRequestId = Convert.ToInt32(resolvedId);
+            }
+
+            // ✅ Step 2: Update the status
+            var updateCmd = conn.CreateCommand();
+            updateCmd.CommandText = @"
+                UPDATE LeaveRequests
+                SET status = @status
+                WHERE id = @leaveRequestId;
+
+                SELECT id, staff_id, leave_start, leave_end, status
+                FROM LeaveRequests
+                WHERE id = @leaveRequestId;";
+
+            updateCmd.Parameters.AddWithValue("@status", request.ApprovalStatus);
+            updateCmd.Parameters.AddWithValue("@leaveRequestId", leaveRequestId.Value);
+
+            LeaveRequest? approvedLeave = null;
+
+            using var reader = await updateCmd.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                approvedLeave = new LeaveRequest
+                {
+                    LeaveRequestId = reader.GetInt32(reader.GetOrdinal("id")),
+                    StaffId = reader.GetInt32(reader.GetOrdinal("staff_id")),
+                    LeaveStart = reader.GetDateTime(reader.GetOrdinal("leave_start")),
+                    LeaveEnd = reader.GetDateTime(reader.GetOrdinal("leave_end")),
+                    Status = reader.GetString(reader.GetOrdinal("status"))
+                };
+            }
+
+            // ✅ Step 3: Fetch impacted shifts if status is Approved
+            if (approvedLeave != null && approvedLeave.Status == "Approved")
+            {
+                var impactedShifts = await FetchLeaveImpactedShiftsAsync(new GetImpactedShiftsByLeaveRequest
+                {
+                    StaffId = approvedLeave.StaffId,
+                    FromDate = approvedLeave.LeaveStart,
+                    ToDate = approvedLeave.LeaveEnd
+                });
+
+                // TODO: Use impactedShifts — for example, auto-replace staff or notify user
+                return impactedShifts;
+            }
+            return null;
+
+        }
+
+        public async Task<List<LeaveImpactedShiftResponse>> FetchLeaveImpactedShiftsAsync(GetImpactedShiftsByLeaveRequest request)
+        {
+            var result = new List<LeaveImpactedShiftResponse>();
+
+            using var conn = new SqlConnection(sqlConnectionString);
+            await conn.OpenAsync();
+
+            var cmd = conn.CreateCommand();
+            cmd.CommandText = @"
+        SELECT 
+            sa.planned_shift_id AS shift_id,
+            sa.shift_date,
+            st.name AS shift_type,
+            d.name AS department_name,
+            r.role_name AS role
+        FROM PlannedShift sa
+        INNER JOIN Staff s ON sa.assigned_staff_id = s.staff_id
+        INNER JOIN ShiftType st ON sa.shift_type_id = st.shift_type_id
+        INNER JOIN Department d ON s.department_id = d.department_id
+        INNER JOIN Role r ON s.role_id = r.role_id
+        WHERE 
+            s.staff_id = @staffId
+            AND sa.shift_date BETWEEN @fromDate AND @toDate
+        ORDER BY sa.shift_date ASC, st.start_time ASC";
+
+            cmd.Parameters.AddWithValue("@staffId", request.StaffId);
+            cmd.Parameters.AddWithValue("@fromDate", request.FromDate);
+            cmd.Parameters.AddWithValue("@toDate", request.ToDate);
+
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                result.Add(new LeaveImpactedShiftResponse
+                {
+                    ShiftId = reader.GetInt32(reader.GetOrdinal("shift_id")),
+                    ShiftDate = reader.GetDateTime(reader.GetOrdinal("shift_date")),
+                    ShiftType = reader.GetString(reader.GetOrdinal("shift_type")),
+                    Department = reader.GetString(reader.GetOrdinal("department_name")),
+                    Role = reader.GetString(reader.GetOrdinal("role"))
+                });
+            }
+
+            return result;
+        }
 
         /// <summary>
         /// Automatically replaces shifts impacted by an approved leave with available staff.
@@ -232,49 +374,22 @@ namespace HospitalStaffMgmtApis.Data.Repository
         /// </summary>
         /// <param name="request">Request containing the staff ID and leave date range.</param>
         /// <returns>List of impacted shifts.</returns>
-        public async Task<List<LeaveImpactedShiftResponse>> FetchLeaveImpactedShiftsAsync(GetImpactedShiftsByLeaveRequest request)
+
+        public static string NormalizeApprovalStatus(string? input)
         {
-            var result = new List<LeaveImpactedShiftResponse>();
+            if (string.IsNullOrWhiteSpace(input)) return "";
 
-            using var conn = new SqlConnection(sqlConnectionString);
-            await conn.OpenAsync();
+            var value = input.Trim().ToLowerInvariant();
 
-            var cmd = conn.CreateCommand();
-            cmd.CommandText = @"
-        SELECT 
-            sa.planned_shift_id AS shift_id,
-            sa.shift_date,
-            st.name AS shift_type,
-            d.name AS department_name,
-            r.role_name AS role
-        FROM PlannedShift sa
-        INNER JOIN Staff s ON sa.assigned_staff_id = s.staff_id
-        INNER JOIN ShiftType st ON sa.shift_type_id = st.shift_type_id
-        INNER JOIN Department d ON s.department_id = d.department_id
-        INNER JOIN Role r ON s.role_id = r.role_id
-        WHERE 
-            s.staff_id = @staffId
-            AND sa.shift_date BETWEEN @fromDate AND @toDate
-        ORDER BY sa.shift_date ASC, st.start_time ASC";
+            // Common match logic
+            if (value.StartsWith("appr")) return "Approved";
+            if (value.StartsWith("rej")) return "Rejected";
 
-            cmd.Parameters.AddWithValue("@staffId", request.StaffId);
-            cmd.Parameters.AddWithValue("@fromDate", request.FromDate);
-            cmd.Parameters.AddWithValue("@toDate", request.ToDate);
+            // Exact match fallback
+            if (value == "approve") return "Approved";
+            if (value == "reject") return "Rejected";
 
-            using var reader = await cmd.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                result.Add(new LeaveImpactedShiftResponse
-                {
-                    ShiftId = reader.GetInt32(reader.GetOrdinal("shift_id")),
-                    ShiftDate = reader.GetDateTime(reader.GetOrdinal("shift_date")),
-                    ShiftType = reader.GetString(reader.GetOrdinal("shift_type")),
-                    Department = reader.GetString(reader.GetOrdinal("department_name")),
-                    Role = reader.GetString(reader.GetOrdinal("role"))
-                });
-            }
-
-            return result;
+            return ""; // Unknown input
         }
 
 
@@ -282,3 +397,6 @@ namespace HospitalStaffMgmtApis.Data.Repository
 
     }
 }
+
+
+
