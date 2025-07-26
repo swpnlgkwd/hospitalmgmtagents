@@ -37,5 +37,7 @@ namespace HospitalStaffMgmtApis.Data.Repository.Interfaces
         /// </summary>
         /// <returns>List of planned shifts.</returns>
         Task<List<PlannedShift>> GetFatiguedStaffAsync(FatiqueStaffRequest? fatiqueStaffRequest = null);
+
+        Task<ShiftScheduleResponse> AssignStaffToShift(AssignShiftRequest request);
     }
 }

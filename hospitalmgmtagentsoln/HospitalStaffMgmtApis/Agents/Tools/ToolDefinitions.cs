@@ -5,6 +5,7 @@ using HospitalStaffMgmtApis.Agents.Tools.HospitalStaffMgmtApis.Agents.Tools;
 using HospitalStaffMgmtApis.Agents.Tools.Leave;
 using HospitalStaffMgmtApis.Agents.Tools.Leave.HospitalStaffMgmtApis.Agents.Tools.Leave;
 using HospitalStaffMgmtApis.Agents.Tools.Shift;
+using HospitalStaffMgmtApis.Agents.Tools.Shifts;
 using HospitalStaffMgmtApis.Agents.Tools.Staff;
 
 namespace HospitalStaffMgmtApis.Agents.Tools
@@ -22,6 +23,9 @@ namespace HospitalStaffMgmtApis.Agents.Tools
             UncoverShiftsTool.GetTool(),
             ApplyForLeaveTool.GetTool(),
             ApproveOrRejectLeaveRequestTool.GetTool(),
+            AssignStaffToShiftTool.GetTool()
+            
+            //AssignStaffToShiftTool.GetTool(),
             //AutoReplaceShiftsForLeaveTool.GetTool(),
 
             //ShiftSwapTool.GetTool(),

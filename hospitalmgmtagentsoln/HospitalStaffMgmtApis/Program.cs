@@ -114,6 +114,7 @@ builder.Services.AddScoped<IToolHandler, UncoverShiftToolHandler>();
 builder.Services.AddScoped<IToolHandler, ViewPendingLeaveRequestToolHandler>();
 builder.Services.AddScoped<IToolHandler, ViewBacktoBackWeeklyShiftHandler>();
 builder.Services.AddScoped<IToolHandler, ApproveOrRejectLeaveRequestToolHandler>();
+builder.Services.AddScoped<IToolHandler, AssignShiftToStaffToolHandler>();
 
 // Register Agent infrastructure
 builder.Services.AddSingleton<IAgentStore, FileAgentStore>();

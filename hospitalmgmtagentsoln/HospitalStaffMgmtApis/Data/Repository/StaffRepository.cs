@@ -350,34 +350,110 @@ ORDER BY n1.shift_date, n1.staff_name
         /// <returns>
         /// A message indicating the success or failure of the assignment.
         /// </returns>
-        public async Task<string> AssignStaffToShiftAsync(AutoAssignShiftRequest request)
+        public async Task<ShiftScheduleResponse> AssignStaffToShift(AssignShiftRequest request)
         {
+            var response = new ShiftScheduleResponse();
+
             using var conn = new SqlConnection(sqlConnectionString);
             await conn.OpenAsync();
-            using var transaction = conn.BeginTransaction();
 
-            try
+            using var cmd = conn.CreateCommand();
+
+            if (request.ShiftId.HasValue)
             {
-                // Update the PlannedShift table to assign the new staff member
-                var updatePlannedCmd = new SqlCommand(@"
-            UPDATE PlannedShift 
-            SET assigned_staff_id = @newStaffId 
-            WHERE planned_shift_id = @shiftId", conn, transaction);
+                // Case 1: ShiftId provided - directly update
+                cmd.CommandText = @"
+            UPDATE PlannedShift
+            SET assigned_staff_id = @ToStaffId,
+                shift_status_id = 2
+            WHERE planned_shift_id = @ShiftId;
 
-                updatePlannedCmd.Parameters.AddWithValue("@newStaffId", request.StaffId);
-                updatePlannedCmd.Parameters.AddWithValue("@shiftId", request.ShiftId);
+            -- Fetch enriched shift details
+            SELECT 
+                ps.planned_shift_id,
+                ps.shift_date,
+                ps.shift_status_id,
+                s.staff_id,
+                s.name AS staff_name,
+                s.role_id,
+                r.role_name,
+                d.department_id,
+                d.name AS department_name,
+                st.name AS shift_type_name
+            FROM PlannedShift ps
+            INNER JOIN Staff s ON ps.assigned_staff_id = s.staff_id
+            INNER JOIN Role r ON s.role_id = r.role_id
+            INNER JOIN Department d ON ps.department_id = d.department_id
+            INNER JOIN ShiftType st ON ps.shift_type_id = st.shift_type_id
+            WHERE ps.planned_shift_id = @ShiftId;
+        ";
 
-                await updatePlannedCmd.ExecuteNonQueryAsync();
-
-                await transaction.CommitAsync();
-                return "Shift reassigned successfully.";
+                cmd.Parameters.AddWithValue("@ToStaffId", request.ToStaffId);
+                cmd.Parameters.AddWithValue("@ShiftId", request.ShiftId.Value);
             }
-            catch (Exception ex)
+            else
             {
-                await transaction.RollbackAsync();
-                return $"Error during reassignment: {ex.Message}";
+                // Case 2: Resolve shift by fromStaffId, shiftType, and date
+                cmd.CommandText = @"
+            DECLARE @ShiftId INT;
+
+            SELECT TOP 1 @ShiftId = ps.planned_shift_id
+            FROM PlannedShift ps
+            INNER JOIN ShiftType st ON ps.shift_type_id = st.shift_type_id
+            WHERE ps.assigned_staff_id = @FromStaffId
+              AND ps.shift_date = @ShiftDate
+              AND st.name = @ShiftType;
+
+            UPDATE PlannedShift
+            SET assigned_staff_id = @ToStaffId,
+                shift_status_id = 2
+            WHERE planned_shift_id = @ShiftId;
+
+            SELECT 
+                ps.planned_shift_id,
+                ps.shift_date,
+                ps.shift_status_id,
+                s.staff_id,
+                s.name AS staff_name,
+                s.role_id,
+                r.role_name,
+                d.department_id,
+                d.name AS department_name,
+                st.name AS shift_type_name
+            FROM PlannedShift ps
+            INNER JOIN Staff s ON ps.assigned_staff_id = s.staff_id
+            INNER JOIN Role r ON s.role_id = r.role_id
+            INNER JOIN Department d ON ps.department_id = d.department_id
+            INNER JOIN ShiftType st ON ps.shift_type_id = st.shift_type_id
+            WHERE ps.planned_shift_id = @ShiftId;
+        ";
+
+                cmd.Parameters.AddWithValue("@FromStaffId", request.FromStaffId);
+                cmd.Parameters.AddWithValue("@ToStaffId", request.ToStaffId);
+                cmd.Parameters.AddWithValue("@ShiftDate", request.ShiftDate);
+                cmd.Parameters.AddWithValue("@ShiftType", request.ShiftType);
             }
+
+            using var reader = await cmd.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                response = new ShiftScheduleResponse
+                {
+                    StaffId = reader.GetInt32(reader.GetOrdinal("staff_id")),
+                    StaffName = reader.GetString(reader.GetOrdinal("staff_name")),
+                    RoleId = reader.GetInt32(reader.GetOrdinal("role_id")),
+                    Role = reader.GetString(reader.GetOrdinal("role_name")),
+                    DepartmentId = reader.GetInt32(reader.GetOrdinal("department_id")),
+                    DepartmentName = reader.GetString(reader.GetOrdinal("department_name")),
+                    ShiftType = reader.GetString(reader.GetOrdinal("shift_type_name")),
+                    ShiftDate = reader.GetDateTime(reader.GetOrdinal("shift_date")),
+                    //ShiftStatus = reader.GetString(reader.GetOrdinal("shift_status_id"))
+                };
+            }
+
+            return response;
         }
+
 
 
         #region Helpers
