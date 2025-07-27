@@ -35,6 +35,7 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   overflow: hidden;
   z-index: 9999;
+  width: 400px; /* Increase if you want more usable space */
 }
 
 .chat-header {
@@ -75,6 +76,7 @@
 }
 
 .message-bubble {
+  max-width: 85%;
   border-radius: 20px;
   max-width: 80%;
   font-size: 14px;
@@ -106,6 +108,9 @@
   border: 1px solid #cdd9e8;
   color: #333;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  max-width: 97%;
 }
 
 .chat-input {
@@ -276,14 +281,29 @@
 }
 
 .chat-row {
+  /* display: flex;
+  align-items: flex-start;
+  margin: 5px 10px; */
   display: flex;
   align-items: flex-start;
-  margin: 5px 10px;
+  width: 100%; /* Fill full width to avoid right-side gap */
+  padding-right: 10px; /* Minor right padding */
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.agent-message-content {
+  max-width: 100%; /* Prevent it from shrinking unnecessarily */
+  word-break: break-word;
 }
 
 /* Add left spacing only for agent */
 .agent-message {
-  flex-direction: row;
+  /* flex-direction: row; */
+   max-width: 100%;
 }
 
 /* Avatar box */
@@ -435,6 +455,28 @@
   background-color: #dbe9ff;
   border-radius: 4px;
 }
+
+.quick-replies {
+  margin-top: 4px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.quick-reply-btn {
+  background-color: #f0f0f0;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.quick-reply-btn:hover {
+  background-color: #d0d0d0;
+}
+
 
 
 

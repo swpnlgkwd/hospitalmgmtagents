@@ -1,4 +1,5 @@
-﻿using HospitalStaffMgmtApis.Data.Models.SmartSuggestions;
+﻿using HospitalStaffMgmtApis.Data.Models.Agent;
+using HospitalStaffMgmtApis.Data.Models.SmartSuggestions;
 
 namespace HospitalStaffMgmtApis.Business.Interfaces
 {
@@ -14,5 +15,15 @@ namespace HospitalStaffMgmtApis.Business.Interfaces
         /// </summary>
         /// <returns>List of smart suggestions including staff and shift matching scores.</returns>
         Task<List<SmartSuggestion>> GetSmartSuggestionsAsync();
+
+
+        /// <summary>
+        /// Retrieves a list of smart scheduling suggestions to help 
+        /// fill uncovered shifts with the most suitable available staff.
+        /// </summary>
+        /// <returns>List of smart suggestions including staff and shift matching scores.</returns>
+        Task<string> GetAgentInsights();
+
+        Task<AgentSummaryResponse> GetDailySchedulerSummaryAsync();
     }
 }

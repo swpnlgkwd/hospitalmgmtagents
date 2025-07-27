@@ -1,22 +1,24 @@
-import { Component, ElementRef, NgZone, ViewChild,ChangeDetectorRef, OnInit } from '@angular/core';
+import { Component, ElementRef, NgZone, ViewChild, ChangeDetectorRef, OnInit } from '@angular/core';
 import { AgentService } from '../services/agent.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FullCalendarComponent } from '@fullcalendar/angular';
 import { SmartSuggestion } from '../models/smart-suggestion.model';
 import { SmartSuggestionsService } from '../services/smart-suggestion.service';
+import { QuickReply } from '../models/agent-daily-summary.model';
 
 
 @Component({
   selector: 'app-chat',
   templateUrl: './chat.html',
   standalone: true,
-  imports: [CommonModule,FormsModule ],
+  imports: [CommonModule, FormsModule],
   styleUrls: ['./chat.css']
 })
 export class Chat implements OnInit {
   messageText: string = '';
-  messages: { sender: string, text: string }[] = [];
+
+  messages: { sender: string, text: string, quickReplies?: QuickReply[]; }[] = [];
   isWaiting = false;
   showChat = false;
   suggestions: SmartSuggestion[] = [];
@@ -24,49 +26,96 @@ export class Chat implements OnInit {
 
 
 
-  
+
   @ViewChild('chatContainer') chatContainer!: ElementRef;
 
   constructor(private agentService: AgentService, private smartSuggestionService: SmartSuggestionsService,
-    private ngZone: NgZone,private cdRef: ChangeDetectorRef) {}
+    private ngZone: NgZone, private cdRef: ChangeDetectorRef) { }
 
   ngOnInit(): void {
-  this.loadSmartSuggestions();
-  this.messages.push({
-    sender: 'Agent',
-    text: '👋 Hello! I am your hospital assistant. How can I help you today?'
-  });
-}
+    this.loadSmartSuggestions();
 
-handleActionClick(s: SmartSuggestion): void {
-  // const actionMessage = {
-  //   type: s.type,
-  //   actionName: s.actionName,
-  //   data: s.actionData || {}
-  // };
-
-  // const messagePayload = `ACTION::${JSON.stringify(actionMessage)}`;
-
-  this.sendMessage(s.actionText); // This should route to your chat API
-}
-
-
-
- loadSmartSuggestions(): void {
-    this.smartSuggestionService.getSmartSuggestions().subscribe({
-      next: (data:SmartSuggestion[]) => (this.suggestions = data),
-      error: (err:any) => console.error('Failed to load smart suggestions', err)
-    });
   }
 
-  removeSuggestion(index: number): void {
-  this.suggestions.splice(index, 1);
-}
+  handleActionClick(s: SmartSuggestion): void {
+    // const actionMessage = {
+    //   type: s.type,
+    //   actionName: s.actionName,
+    //   data: s.actionData || {}
+    // };
 
-applySuggestion(suggestion: string) {
-  this.messageText = suggestion;
-  this.sendMessage();  // Optionally send immediately
-}
+    // const messagePayload = `ACTION::${JSON.stringify(actionMessage)}`;
+
+    this.sendMessage(s.actionText); // This should route to your chat API
+  }
+
+  loadSmartSuggestions(): void {
+    // Load proactive action suggestions
+    this.smartSuggestionService.getSmartSuggestions().subscribe({
+      next: (data: SmartSuggestion[]) => {
+        this.suggestions = data;
+      },
+      error: (err: any) => {
+        console.error('Failed to load smart suggestions', err);
+      }
+    });
+    // On init or scheduler landing
+    this.smartSuggestionService.getDailySummary().subscribe({
+      next: (response) => {
+        const message = response?.summaryMessage?.trim();
+        if (message) {
+          this.messages.push({
+            sender: 'Agent',
+            text: message,
+            quickReplies: response.quickReplies
+          });
+        } else {
+          // Fallback message if summary is empty
+          this.messages.push({
+            sender: 'Agent',
+            text: '👋 Hello! I am your hospital assistant. How can I help you today?'
+          });
+        }
+        this.cdRef.detectChanges();
+      },
+      error: (err: any) => {
+        console.error('Failed to load daily agent summary', err);
+        this.messages.push({
+          sender: 'Agent',
+          text: '👋 Hello! I am your hospital assistant. How can I help you today?'
+        });
+      }
+    });
+
+  }
+
+  handleQuickReply(reply: { label: string; value: string }) {
+    
+    for (let i = this.messages.length - 1; i >= 0; i--) {
+      const message = this.messages[i];
+      if (message.sender === 'Agent' && message.quickReplies?.length) {
+        delete message.quickReplies;
+        break;
+      }
+    }
+
+     this.cdRef.detectChanges();
+
+    // Process the reply (you can call your service or tool here)
+   this.sendMessage(reply.value);  // assuming you have this method
+  }
+
+
+
+
+  removeSuggestion(index: number): void {
+    this.suggestions.splice(index, 1);
+  }
+
+  applySuggestion(suggestion: string) {
+    this.messageText = suggestion;
+    this.sendMessage();  // Optionally send immediately
+  }
 
   handleSuggestionClick(s: SmartSuggestion): void {
     this.sendMessage(s.actionPayload); // Treat as if user typed it
@@ -120,7 +169,7 @@ applySuggestion(suggestion: string) {
   }
 
   toggleChat() {
-    this.showChat = !this.showChat;  
+    this.showChat = !this.showChat;
   }
 
 }

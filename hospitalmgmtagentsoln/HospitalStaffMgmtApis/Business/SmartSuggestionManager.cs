@@ -1,4 +1,5 @@
 ﻿using HospitalStaffMgmtApis.Business.Interfaces;
+using HospitalStaffMgmtApis.Data.Models.Agent;
 using HospitalStaffMgmtApis.Data.Models.SmartSuggestions;
 using HospitalStaffMgmtApis.Data.Repository.Interfaces;
 using System.Collections.Generic;
@@ -49,7 +50,7 @@ namespace HospitalStaffMgmtApis.Business
             {
                 var shiftLines = uncoveredShifts
                     .Select(s => $"- {s.ShiftDate:dd MMM yyyy} shift")
-                    .ToList(); 
+                    .ToList();
 
                 var actionText = $"Auto-assign available staff to the following uncovered shifts this week:\n" +
                                  string.Join("\n", shiftLines);
@@ -113,7 +114,7 @@ namespace HospitalStaffMgmtApis.Business
                     })
                     .ToList();
 
-                var actionText = "Reassign shifts to relieve fatigue for the following staff:\n" + string.Join("\n", groupedFatigue) ;
+                var actionText = "Reassign shifts to relieve fatigue for the following staff:\n" + string.Join("\n", groupedFatigue);
                 var actionPayload = "Show shift information for Back-to-Back Night Shifts:\n" + string.Join("\n", groupedFatigue);
                 //var actionPayload = "View Back to back night shift information" ;
 
@@ -133,6 +134,87 @@ namespace HospitalStaffMgmtApis.Business
             return suggestions;
         }
 
+        public async Task<string> GetAgentInsights()
+        {
+            var insights = new List<string>();
+            var today = DateTime.Today.Date;
+            insights.Add($"👋 Hello! Here's your daily summary for today {today}:\n");
 
+            //if (role == "Scheduler")
+            //{
+            var uncoveredShifts = await shiftRepository.GetUncoveredShiftsForTodayAsync();
+            if (uncoveredShifts.Any())
+                insights.Add($"📅 Uncovered Shifts: {uncoveredShifts.Count} shift is currently unassigned.");
+
+            //var fatigued = await staffRepository.GetFatiguedStaffAsync();
+            //if (fatigued.Any())
+            //    insights.Add($"{fatigued.Count} staff members may be at fatigue risk due to back-to-back shifts.");
+
+            //var pendingLeaves = await leaveRequestRepository.FetchPendingLeaveRequestsAsync();
+            //if (pendingLeaves.Any())
+            //    insights.Add($"You have {pendingLeaves.Count} leave requests pending approval.");
+            // }
+            //else if (role == "Employee")
+            //{
+            //    var isOnLeave = await _repository.IsStaffOnLeaveToday(userId);
+            //    if (isOnLeave)
+            //        insights.Add("You are currently on leave today. Rest well!");
+
+            //    var upcomingShifts = await _repository.GetShiftsForStaffAsync(userId, DateTime.Today, DateTime.Today.AddDays(2));
+            //    if (upcomingShifts.Any())
+            //        insights.Add($"You have {upcomingShifts.Count} upcoming shift(s) in the next 2 days.");
+            //}
+
+            if (insights.Count == 0)
+                return "Hello! 👋 Everything looks good at the moment. No urgent issues to address.";
+
+            return $" \n- {string.Join("\n- ", insights)}\nWould you like help with any of these?";
+        }
+
+
+        public async Task<AgentSummaryResponse> GetDailySchedulerSummaryAsync()
+        {
+            var uncoveredCount = await shiftRepository.GetUncoveredShiftsForTodayAsync();
+            var pendingLeaves = await leaveRequestRepository.FetchPendingLeaveRequestsAsync();
+
+            var parts = new List<string>();
+
+            if (uncoveredCount.Count > 0)
+                parts.Add($"• 🕒 {uncoveredCount.Count} shift{(uncoveredCount.Count > 1 ? "s" : "")} remain unassigned and may impact coverage.");
+
+            if (pendingLeaves.Count > 0)
+                parts.Add($"• 📥 {pendingLeaves.Count} leave request{(pendingLeaves.Count > 1 ? "s" : "")} are pending your approval.");
+
+            string message = "";
+
+
+            
+
+            if (parts.Count == 0)
+            {
+                message = "✅ All set! There are no uncovered shifts or pending leave requests for today. Keep up the great work!";
+            }
+            else
+            {
+                message = "👋 Good morning! Here's a quick summary of today's staffing situation:\n\n"
+                        + string.Join("\n", parts)
+                        + "\n\n👉 Would you like to review one of these now?";
+            }
+
+            var quickReplies = new List<QuickReply>();
+            var today = DateTime.Today.ToString("yyyy-MM-dd");
+
+            if (uncoveredCount.Count > 0)
+                quickReplies.Add(new QuickReply { Label = "📅 Review Coverage", Value = $"show uncovered shifts for {today}" });
+
+            if (pendingLeaves.Count > 0)
+                quickReplies.Add(new QuickReply { Label = "✅ View Pending Leaves", Value = "show/view pending leave requests" });
+
+            return new AgentSummaryResponse
+            {
+                SummaryMessage = message,
+                QuickReplies = quickReplies
+            };
+        }
     }
 }

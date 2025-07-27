@@ -21,6 +21,8 @@ namespace HospitalStaffMgmtApis.Data.Repository.Interfaces
 
         Task<List<PlannedShift>> GetUncoveredShiftsAsync(GetUncoveredShiftsRequest? request = null);
 
+        Task<List<PlannedShift>> GetUncoveredShiftsForTodayAsync();
+
         Task<List<ShiftScheduleResponse>> FetchShiftInformationByStaffId(int staffId, DateOnly startDate, DateOnly endDate);
 
         Task<int?> GetShiftTypeIdByNameAsync(string? shiftTypeName);

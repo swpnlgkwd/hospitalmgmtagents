@@ -453,6 +453,53 @@ namespace HospitalStaffMgmtApis.Data.Repository
             return uncoveredShifts;
         }
 
+        public async Task<List<PlannedShift>> GetUncoveredShiftsForTodayAsync()
+        {
+            var uncoveredShifts = new List<PlannedShift>();
+
+            using var conn = new SqlConnection(sqlConnectionString);
+            await conn.OpenAsync();
+
+            var query = @"
+        SELECT 
+            ps.planned_shift_id,
+            ps.shift_date,
+            st.name AS shift_type_name,
+            d.name AS department_name,
+            ps.slot_number,
+            ps.shift_status_id,
+            ps.assigned_staff_id
+        FROM PlannedShift ps
+        JOIN ShiftType st ON ps.shift_type_id = st.shift_type_id
+        JOIN Department d ON ps.department_id = d.department_id
+        LEFT JOIN Staff s ON ps.assigned_staff_id = s.staff_id
+        WHERE ps.assigned_staff_id IS NULL
+          AND ps.shift_date = @today";
+
+            using var cmd = new SqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@today", DateTime.Today);
+
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                uncoveredShifts.Add(new PlannedShift
+                {
+                    PlannedShiftId = reader.GetInt32(reader.GetOrdinal("planned_shift_id")),
+                    ShiftDate = reader.GetDateTime(reader.GetOrdinal("shift_date")),
+                    ShiftTypeName = reader.GetString(reader.GetOrdinal("shift_type_name")),
+                    DepartmentName = reader.GetString(reader.GetOrdinal("department_name")),
+                    SlotNumber = reader.GetInt32(reader.GetOrdinal("slot_number")),
+                    ShiftStatusId = reader.GetInt32(reader.GetOrdinal("shift_status_id")),
+                    AssignedStaffId = reader.IsDBNull(reader.GetOrdinal("assigned_staff_id"))
+                        ? null
+                        : reader.GetInt32(reader.GetOrdinal("assigned_staff_id"))
+                });
+            }
+
+            return uncoveredShifts;
+        }
+
+
         /// <summary>
         /// Retrieves the list of shifts assigned to a specific staff member within a date range.
         /// </summary>
@@ -505,7 +552,6 @@ namespace HospitalStaffMgmtApis.Data.Repository
 
             return result;
         }
-
 
 
     }

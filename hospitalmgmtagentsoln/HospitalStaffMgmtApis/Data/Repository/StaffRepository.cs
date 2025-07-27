@@ -361,14 +361,13 @@ ORDER BY n1.shift_date, n1.staff_name
 
             if (request.ShiftId.HasValue)
             {
-                // Case 1: ShiftId provided - directly update
+                // ✅ Case 1: Direct assignment using ShiftId (including uncovered/vacant shifts)
                 cmd.CommandText = @"
             UPDATE PlannedShift
             SET assigned_staff_id = @ToStaffId,
                 shift_status_id = 2
             WHERE planned_shift_id = @ShiftId;
 
-            -- Fetch enriched shift details
             SELECT 
                 ps.planned_shift_id,
                 ps.shift_date,
@@ -391,9 +390,9 @@ ORDER BY n1.shift_date, n1.staff_name
                 cmd.Parameters.AddWithValue("@ToStaffId", request.ToStaffId);
                 cmd.Parameters.AddWithValue("@ShiftId", request.ShiftId.Value);
             }
-            else
+            else if (request.FromStaffId.HasValue)
             {
-                // Case 2: Resolve shift by fromStaffId, shiftType, and date
+                // ✅ Case 2: Reassigning shift from one staff to another using FromStaffId + date/type
                 cmd.CommandText = @"
             DECLARE @ShiftId INT;
 
@@ -428,10 +427,104 @@ ORDER BY n1.shift_date, n1.staff_name
             WHERE ps.planned_shift_id = @ShiftId;
         ";
 
-                cmd.Parameters.AddWithValue("@FromStaffId", request.FromStaffId);
+                cmd.Parameters.AddWithValue("@FromStaffId", request.FromStaffId.Value);
                 cmd.Parameters.AddWithValue("@ToStaffId", request.ToStaffId);
                 cmd.Parameters.AddWithValue("@ShiftDate", request.ShiftDate);
                 cmd.Parameters.AddWithValue("@ShiftType", request.ShiftType);
+            }
+            else if (request.FromStaffId.HasValue)
+            {
+                // ✅ Case 2: Reassigning shift from one staff to another using FromStaffId + date/type
+                cmd.CommandText = @"
+            DECLARE @ShiftId INT;
+
+            SELECT TOP 1 @ShiftId = ps.planned_shift_id
+            FROM PlannedShift ps
+            INNER JOIN ShiftType st ON ps.shift_type_id = st.shift_type_id
+            WHERE ps.assigned_staff_id = @FromStaffId
+              AND ps.shift_date = @ShiftDate
+              AND st.name = @ShiftType;
+
+            UPDATE PlannedShift
+            SET assigned_staff_id = @ToStaffId,
+                shift_status_id = 2
+            WHERE planned_shift_id = @ShiftId;
+
+            SELECT 
+                ps.planned_shift_id,
+                ps.shift_date,
+                ps.shift_status_id,
+                s.staff_id,
+                s.name AS staff_name,
+                s.role_id,
+                r.role_name,
+                d.department_id,
+                d.name AS department_name,
+                st.name AS shift_type_name
+            FROM PlannedShift ps
+            INNER JOIN Staff s ON ps.assigned_staff_id = s.staff_id
+            INNER JOIN Role r ON s.role_id = r.role_id
+            INNER JOIN Department d ON ps.department_id = d.department_id
+            INNER JOIN ShiftType st ON ps.shift_type_id = st.shift_type_id
+            WHERE ps.planned_shift_id = @ShiftId;
+        ";
+
+                cmd.Parameters.AddWithValue("@FromStaffId", request.FromStaffId.Value);
+                cmd.Parameters.AddWithValue("@ToStaffId", request.ToStaffId);
+                cmd.Parameters.AddWithValue("@ShiftDate", request.ShiftDate);
+                cmd.Parameters.AddWithValue("@ShiftType", request.ShiftType);
+            }
+            else if (!request.FromStaffId.HasValue && !request.ShiftId.HasValue)
+            {
+                // ✅ Case 3: Fallback - find vacant shift by shift date and shift type
+                cmd.CommandText = @"
+    DECLARE @ShiftId INT;
+
+    SELECT TOP 1 @ShiftId = ps.planned_shift_id
+    FROM PlannedShift ps
+    INNER JOIN ShiftType st ON ps.shift_type_id = st.shift_type_id
+    WHERE ps.shift_date = @ShiftDate
+      AND st.name = @ShiftType
+      ;
+
+    IF @ShiftId IS NULL
+        THROW 51000, 'No vacant shift found for the given date and type.', 1;
+
+    UPDATE PlannedShift
+    SET assigned_staff_id = @ToStaffId,
+        shift_status_id = 2
+    WHERE planned_shift_id = @ShiftId;
+
+    SELECT 
+        ps.planned_shift_id,
+        ps.shift_date,
+        ps.shift_status_id,
+        s.staff_id,
+        s.name AS staff_name,
+        s.role_id,
+        r.role_name,
+        d.department_id,
+        d.name AS department_name,
+        st.name AS shift_type_name
+    FROM PlannedShift ps
+    INNER JOIN Staff s ON ps.assigned_staff_id = s.staff_id
+    INNER JOIN Role r ON s.role_id = r.role_id
+    INNER JOIN Department d ON ps.department_id = d.department_id
+    INNER JOIN ShiftType st ON ps.shift_type_id = st.shift_type_id
+    WHERE ps.planned_shift_id = @ShiftId;
+    ";
+
+                cmd.Parameters.AddWithValue("@ToStaffId", request.ToStaffId);
+                cmd.Parameters.AddWithValue("@ShiftDate", request.ShiftDate);
+                cmd.Parameters.AddWithValue("@ShiftType", request.ShiftType);
+            }
+            else
+            {
+                // if fromStaff and shift id both null then try to find out the shift based on the value
+
+
+                // ❌ Case 3: Neither ShiftId nor FromStaffId provided
+                throw new ArgumentException("Either ShiftId or FromStaffId must be provided.");
             }
 
             using var reader = await cmd.ExecuteReaderAsync();
@@ -447,7 +540,6 @@ ORDER BY n1.shift_date, n1.staff_name
                     DepartmentName = reader.GetString(reader.GetOrdinal("department_name")),
                     ShiftType = reader.GetString(reader.GetOrdinal("shift_type_name")),
                     ShiftDate = reader.GetDateTime(reader.GetOrdinal("shift_date")),
-                    //ShiftStatus = reader.GetString(reader.GetOrdinal("shift_status_id"))
                 };
             }
 

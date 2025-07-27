@@ -3,79 +3,80 @@
 
 <!-- Chat Window -->
 <div class="chat-window" *ngIf="showChat">
-    <div class="chat-header flex items-center justify-between px-4 py-2 bg-blue-600 text-white rounded-t-2xl shadow-md">
-        <span class="text-lg font-semibold">ShiftGenie <span class="text-sm font-normal opacity-80">– Your Wish,
-                Scheduled</span></span>
+  <div class="chat-header flex items-center justify-between px-4 py-2 bg-blue-600 text-white rounded-t-2xl shadow-md">
+    <span class="text-lg font-semibold">ShiftGenie <span class="text-sm font-normal opacity-80">– Your Wish, Scheduled</span></span>
+    <button type="button" class="btn-close btn-close-white ms-auto" aria-label="Close" (click)="toggleChat()" style="filter: brightness(0) invert(1);"></button>
+  </div>
 
-        <button type="button" class="btn-close btn-close-white ms-auto" aria-label="Close" (click)="toggleChat()"
-            style="filter: brightness(0) invert(1);">
-        </button>
-
-    </div>
-
-
-    <!-- Chat Messages -->
-    <div class="chat-messages" #chatContainer>
-        <div *ngFor="let message of messages" class="chat-row" [ngClass]="{
+  <!-- Chat Messages -->
+  <div class="chat-messages" #chatContainer>
+    <div *ngFor="let message of messages" class="chat-row" [ngClass]="{
         'user-message': message.sender === 'User',
         'agent-message': message.sender === 'Agent'
       }">
-            <ng-container *ngIf="message.sender === 'Agent'">
-                <div class="avatar">🤖</div>
-                <div class="message-bubble">{{ message.text }}</div>
-            </ng-container>
-            <ng-container *ngIf="message.sender === 'User'">
-                <div class="avatar user-avatar">🧑</div>
-                <div class="message-bubble">{{ message.text }}</div>
-            </ng-container>
-        </div>
 
-        <div class="typing-indicator" *ngIf="isWaiting">
-            <span class="shiftgenie-label">ShiftGenie is thinking</span>
-            <span class="dot-loader">
-                <span class="dot"></span>
-                <span class="dot"></span>
-                <span class="dot"></span>
-            </span>
+      <!-- Agent Message -->
+      <ng-container *ngIf="message.sender === 'Agent'">
+        <div class="avatar">🤖</div>
+        
+        <!-- Container for message bubble + quick replies -->
+        <div class="agent-message-content">
+          <div class="message-bubble">{{ message.text }}</div>
+
+          <!-- Quick Replies -->
+          <div *ngIf="message.quickReplies?.length" class="quick-replies">
+            <button *ngFor="let reply of message.quickReplies"
+                    class="quick-reply-btn"
+                    (click)="handleQuickReply(reply)">
+              {{ reply.label }}
+            </button>
+          </div>
         </div>
+      </ng-container>
+
+      <!-- User Message -->
+      <ng-container *ngIf="message.sender === 'User'">
+        <div class="avatar user-avatar">🧑</div>
+        <div class="message-bubble">{{ message.text }}</div>
+      </ng-container>
     </div>
-<div class="suggestion-container">
-  <div *ngFor="let s of suggestions; let i = index" class="suggestion-chip">
-    <div class="chip-content">
-<span
-  class="chip-message"
-  [title]="s.message"
-  (click)="handleSuggestionClick(s)">
-  {{ s.message }}
-    </span>
-      
 
-      <button
-        *ngIf="s.actionName"
-        class="chip-action-btn"
-        (click)="handleActionClick(s)"
-        [title]="s.actionLabel || 'Act'"
-      >
-        {{ s.actionIcon || '⚡' }}
-      </button>
-
-      <span class="suggestion-chip-close" (click)="removeSuggestion(i)">×</span>
+    <!-- Typing Indicator -->
+    <div class="typing-indicator" *ngIf="isWaiting">
+      <span class="shiftgenie-label">ShiftGenie is thinking</span>
+      <span class="dot-loader">
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+      </span>
     </div>
   </div>
-</div>
 
+  <!-- Suggestions (chips) -->
+  <div class="suggestion-container">
+    <div *ngFor="let s of suggestions; let i = index" class="suggestion-chip">
+      <div class="chip-content">
+        <span class="chip-message" [title]="s.message" (click)="handleSuggestionClick(s)">
+          {{ s.message }}
+        </span>
 
-
-
-
-    <!-- Chat Input -->
-    <div class="chat-input">
-        <input type="text" [(ngModel)]="messageText" (keyup.enter)="sendMessage()" [disabled]="isWaiting"
-            placeholder="Type your message..." />
-        <button class="send-button" (click)="sendMessage()" [disabled]="isWaiting || !messageText.trim()"
-            aria-label="Send message">
-            <span *ngIf="!isWaiting">📨</span>
-            <span *ngIf="isWaiting" class="loader"></span>
+        <button *ngIf="s.actionName" class="chip-action-btn" (click)="handleActionClick(s)"
+          [title]="s.actionLabel || 'Act'">
+          {{ s.actionIcon || '⚡' }}
         </button>
+
+        <span class="suggestion-chip-close" (click)="removeSuggestion(i)">×</span>
+      </div>
     </div>
+  </div>
+
+  <!-- Chat Input -->
+  <div class="chat-input">
+    <input type="text" [(ngModel)]="messageText" (keyup.enter)="sendMessage()" [disabled]="isWaiting"
+      placeholder="Type your message..." />
+    <button class="send-button" (click)="sendMessage()" [disabled]="isWaiting || !messageText.trim()" aria-label="Send message">
+      <span *ngIf="!isWaiting">📨</span>
+      <span *ngIf="isWaiting" class="loader"></span>
+    </button>
+  </div>
 </div>

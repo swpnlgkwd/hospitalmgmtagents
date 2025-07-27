@@ -4,7 +4,7 @@ namespace HospitalStaffMgmtApis.Data.Models
 {
     public class PlannedShift
     {
-        [JsonPropertyName("plannedShiftId")]
+        [JsonPropertyName("shiftId")]
         public int PlannedShiftId { get; set; }
 
         [JsonPropertyName("shiftDate")]
