@@ -59,10 +59,18 @@ export class Chat implements OnInit {
         console.error('Failed to load smart suggestions', err);
       }
     });
+
+     // Show typing animation first
+    this.isWaiting = true;
+    
     // On init or scheduler landing
-    this.smartSuggestionService.getDailySummary().subscribe({
-      next: (response) => {
-        const message = response?.summaryMessage?.trim();
+ // Get daily summary with a delay to simulate typing
+  this.smartSuggestionService.getDailySummary().subscribe({
+    next: (response) => {
+      const message = response?.summaryMessage?.trim();
+
+      // Simulate typing delay (2 seconds)
+      setTimeout(() => {
         if (message) {
           this.messages.push({
             sender: 'Agent',
@@ -70,24 +78,33 @@ export class Chat implements OnInit {
             quickReplies: response.quickReplies
           });
         } else {
-          // Fallback message if summary is empty
           this.messages.push({
             sender: 'Agent',
             text: '👋 Hello! I am your hospital assistant. How can I help you today?'
           });
         }
+        this.isWaiting = false;
         this.cdRef.detectChanges();
-      },
-      error: (err: any) => {
-        console.error('Failed to load daily agent summary', err);
+      }, 4000); // 2-second delay
+    },
+    error: (err: any) => {
+      console.error('Failed to load daily agent summary', err);
+
+      // Show fallback message after delay
+      setTimeout(() => {
         this.messages.push({
           sender: 'Agent',
           text: '👋 Hello! I am your hospital assistant. How can I help you today?'
         });
-      }
-    });
+        this.isWaiting = false;
+        this.cdRef.detectChanges();
+      }, 2000); // Delay fallback too
+    }
+  });
+}
+ 
 
-  }
+  
 
   handleQuickReply(reply: { label: string; value: string }) {
     
