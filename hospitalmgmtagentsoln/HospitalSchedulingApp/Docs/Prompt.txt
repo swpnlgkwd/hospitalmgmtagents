@@ -1,0 +1,50 @@
+﻿Working Prompt
+
+Talk to Schedule : 
+
+--> Finding Shift information
+1. Show ICU Morning shifts for this week --
+
+2. Show ICU Evening shifts for this week --
+
+3. Show ICU Night shifts for this week --
+
+4. Who worked in OPD yesterday --
+
+5. When is Emma working next? --
+
+6. Show me the shift schedule of Emma --
+
+7. Give me schedule between 1st Aug 2025 and 30 Aug 2025 schedule for Emma. --
+
+8. Give me OPD schedule for next Monday. -- not wokring
+
+9. Show me the ICU department's schedule for this week --
+
+10. Show me the schedule for a staff member named Emma --
+
+11. Show me the schedule for a staff member named  Emma from 1st Aug 2025 and 30 Aug 2025 --
+
+12. Find the vacant shift from 1st August to 31st Aug 2025 --
+
+-- Finding Available Staff
+
+1. Who can work tomorrow's night shift? --
+
+2.  Who can work night shift 1st aug 2025? --
+
+3. Who can work Monringshift 1st aug 2025? --
+
+2. Who can work tomorrow's night shift for pediatrics department? --
+3.  Who can work 1st aug 2025 night shift for pediatrics department? --
+
+3.  Who is free to work the night shift tomorrow? --
+ 4. Who is free to work the night shift between 1st Aug 2025 to 3rd Aug 2025?  - -  And condition
+
+4. Find someone available for the ICU morning shift on 3rd Aug.
+
+5. We need a nurse for the icu department tonight — who’s not scheduled yet?
+
+6. I need someone to cover a duty in pediatrics this Friday night. Who’s free? -- not working
+
+7. Help me reassign a shift — who is eligible and free?
